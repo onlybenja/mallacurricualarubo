@@ -82,10 +82,7 @@ let tooltipsPrereqHabilitados = false;
 
 // Base de datos de usuarios (en un proyecto real esto estaría en Firebase Auth)
 const usuarios = {
-    'admin': { password: 'admin', nombre: 'Administrador', carrera: 'Medicina Veterinaria', esAdmin: true },
-    'estudiante1': { password: '123456', nombre: 'Estudiante 1', carrera: 'Medicina Veterinaria', esAdmin: false },
-    'estudiante2': { password: '123456', nombre: 'Estudiante 2', carrera: 'Ingeniería en Realidad Virtual y Diseño de Juegos Digitales', esAdmin: false },
-    'profesor': { password: 'profesor2024', nombre: 'Profesor', carrera: 'Medicina Veterinaria', esAdmin: false }
+    'admin': { password: 'admin', nombre: 'Administrador', carrera: 'Medicina Veterinaria', esAdmin: true }
 };
 
 // Función para crear nueva cuenta
