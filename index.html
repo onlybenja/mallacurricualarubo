@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malla Curricular</title>
+    <link rel="shortcut icon" href="./libros.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Formulario de inicio de sesión -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                </div>
+                <h1>Malla Curricular</h1>
+                <p>Accede a tu progreso académico</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <div class="input-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <input type="text" id="loginUser" placeholder="Usuario" required autocomplete="username">
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <circle cx="12" cy="16" r="1"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <input type="password" id="loginPass" placeholder="Contraseña" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="login-button">
+                    <span>Iniciar Sesión</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"/>
+                        <path d="M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                
+                <div id="loginError" class="login-error"></div>
+            </form>
+            
+            <div class="login-footer">
+                <!-- Las cuentas de demostración han sido eliminadas -->
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <header>
+            <h1 id="tituloCarrera">Malla Curricular - Medicina Veterinaria</h1>
+            <div class="profile-section" style="position: absolute; top: 20px; right: 40px;">
+                <button id="opcionesBtn" title="Perfil">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="nombreUsuario">Usuario</span>
+                </button>
+                <div id="opcionesDropdown" class="opciones-dropdown" style="display:none;">
+                    <button id="dropdownNotasBtn"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Descargar Notas</button>
+                    <button id="dropdownHorarioBtn"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Horario</button>
+                    <button id="dropdownPersonalizacionBtn"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 7 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 15.5H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 11a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1-2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09A1.65 1.65 0 0 0 12 3.6V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09A1.65 1.65 0 0 0 21 12.5h.09a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Personalización</button>
+                    <button id="dropdownAdminBtn" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Administración</button>
+                    <button id="dropdownCerrarSesionBtn" style="color:#e74c3c;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M17 16l4-4m0 0l-4-4m4 4H7"/><path d="M3 12a9 9 0 1 1 18 0 9 9 0 0 1-18 0z"/></svg>Cerrar sesión</button>
+                </div>
+            </div>
+            <div class="controls">
+                <div class="progress-container">
+                    <label>Progreso Total:</label>
+                    <div class="progress-bar">
+                        <div class="progress" id="totalProgress"></div>
+                    </div>
+                    <span id="progressPercentage">0%</span>
+                </div>
+            </div>
+        </header>
+        <main id="mallaContainer">
+            <!-- Los semestres se generarán dinámicamente aquí -->
+        </main>
+        <footer>
+            <p id="footerText">© 2024 Malla Curricular - Medicina Veterinaria. Todos los derechos reservados.</p>
+        </footer>
+        <!-- <section id="horarioSection"></section> -->
+        <div id="horarioVisualModal" class="modal-horario">
+            <div class="modal-horario-content">
+                <div class="horario-modal-header">
+                    <div class="horario-modal-left">
+                        <div id="selectorSemestreVisualContainer"></div>
+                        <div class="horario-modal-actions">
+                            <button id="editarHorarioBtn"></button>
+                                                    <button id="descargarHorarioJpgBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:7px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17v-6h8v6"/><path d="M8 13h8"/></svg>
+                            Descargar Horario
+                        </button>
+                        </div>
+                    </div>
+                    <button class="close-horario-modal" id="closeHorarioModalBtn" title="Cerrar" onclick="cerrarHorario()">&times;</button>
+                </div>
+                <section id="horarioVisualSection"></section>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel de personalización -->
+    <div id="personalizacionPanel" class="personalizacion-panel" style="display:none;">
+        <h2>Personalización</h2>
+        <div class="opcion-grupo">
+            <h3>Color del tema</h3>
+            <div id="coloresGrid" class="colores-grid">
+                <div class="color-opcion" data-color='{"nombre":"Rosa","primario":"#fce4ec","secundario":"#f8bbd0"}' style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);"></div>
+                <div class="color-opcion" data-color='{"nombre":"Azul","primario":"#e3f2fd","secundario":"#bbdefb"}' style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);"></div>
+                <div class="color-opcion" data-color='{"nombre":"Verde","primario":"#e8f5e8","secundario":"#c8e6c9"}' style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);"></div>
+                <div class="color-opcion" data-color='{"nombre":"Morado","primario":"#f3e5f5","secundario":"#e1bee7"}' style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);"></div>
+                <div class="color-opcion" data-color='{"nombre":"Naranja","primario":"#fff3e0","secundario":"#ffcc80"}' style="background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%);"></div>
+                <div class="color-opcion" data-color='{"nombre":"Gris","primario":"#f5f5f5","secundario":"#e0e0e0"}' style="background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);"></div>
+            </div>
+        </div>
+        <div class="opcion-grupo">
+            <h3>Fuente</h3>
+            <select id="fuenteSelect">
+                <option value='{"nombre":"Poppins","valor":"Poppins, sans-serif"}'>Poppins</option>
+                <option value='{"nombre":"Roboto","valor":"Roboto, sans-serif"}'>Roboto</option>
+                <option value='{"nombre":"Open Sans","valor":"Open Sans, sans-serif"}'>Open Sans</option>
+                <option value='{"nombre":"Lato","valor":"Lato, sans-serif"}'>Lato</option>
+                <option value='{"nombre":"Montserrat","valor":"Montserrat, sans-serif"}'>Montserrat</option>
+                <option value='{"nombre":"Source Sans Pro","valor":"Source Sans Pro, sans-serif"}'>Source Sans Pro</option>
+                <option value='{"nombre":"Raleway","valor":"Raleway, sans-serif"}'>Raleway</option>
+                <option value='{"nombre":"PT Sans","valor":"PT Sans, sans-serif"}'>PT Sans</option>
+                <option value='{"nombre":"Ubuntu","valor":"Ubuntu, sans-serif"}'>Ubuntu</option>
+                <option value='{"nombre":"Nunito","valor":"Nunito, sans-serif"}'>Nunito</option>
+                <option value='{"nombre":"Inter","valor":"Inter, sans-serif"}'>Inter</option>
+                <option value='{"nombre":"Work Sans","valor":"Work Sans, sans-serif"}'>Work Sans</option>
+                <option value='{"nombre":"Quicksand","valor":"Quicksand, sans-serif"}'>Quicksand</option>
+                <option value='{"nombre":"Comfortaa","valor":"Comfortaa, sans-serif"}'>Comfortaa</option>
+                <option value='{"nombre":"Barlow","valor":"Barlow, sans-serif"}'>Barlow</option>
+                <option value='{"nombre":"Josefin Sans","valor":"Josefin Sans, sans-serif"}'>Josefin Sans</option>
+                <option value='{"nombre":"Maven Pro","valor":"Maven Pro, sans-serif"}'>Maven Pro</option>
+                <option value='{"nombre":"Titillium Web","valor":"Titillium Web, sans-serif"}'>Titillium Web</option>
+                <option value='{"nombre":"Cabin","valor":"Cabin, sans-serif"}'>Cabin</option>
+                <option value='{"nombre":"Karla","valor":"Karla, sans-serif"}'>Karla</option>
+            </select>
+        </div>
+
+        <div class="opciones-acciones">
+            <button id="guardarOpcionesBtn">Guardar cambios</button>
+        </div>
+    </div>
+    
+    <!-- Panel de administración -->
+    <div id="adminPanel" class="admin-panel" style="display:none;">
+        <h2>Administración de Cuentas</h2>
+        <div class="admin-form">
+            <div class="form-group">
+                <label>Nombre completo:</label>
+                <input type="text" id="adminNombre" placeholder="Ej: Benjamin Jimenez" required>
+            </div>
+            <div class="form-group">
+                <label>Carrera:</label>
+                <select id="adminCarrera" required>
+                    <option value="">Seleccionar carrera</option>
+                    <option value="Medicina Veterinaria">Medicina Veterinaria</option>
+                    <option value="Ingeniería en Realidad Virtual y Diseño de Juegos Digitales">Ingeniería en Realidad Virtual y Diseño de Juegos Digitales</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Usuario:</label>
+                <input type="text" id="adminUsuario" placeholder="Ej: benjamin.jimenez" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="adminPassword" placeholder="Mínimo 4 caracteres" required>
+            </div>
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="adminIsAdmin">
+                    <span class="checkbox-custom"></span>
+                    Es administrador
+                </label>
+                <small>Los administradores pueden crear y gestionar cuentas</small>
+            </div>
+            <div class="admin-actions">
+                <button id="crearCuentaBtn">Crear cuenta</button>
+                <button id="verCuentasBtn">Ver cuentas</button>
+                <button id="cerrarAdminBtn">Cerrar</button>
+            </div>
+        </div>
+        <div id="adminError" style="color:#c00; font-size:0.95em; display:none; margin-top:10px;"></div>
+    </div>
+    
+    <!-- Ventana de cuentas creadas -->
+    <div id="cuentasModal" class="modal-cuentas" style="display:none;">
+        <div class="modal-cuentas-content">
+            <div class="modal-cuentas-header">
+                <h2>Cuentas Creadas</h2>
+                <button class="close-cuentas-modal" id="closeCuentasModalBtn" title="Cerrar">&times;</button>
+            </div>
+            <div class="modal-cuentas-body">
+                <div id="cuentasLista"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <!-- Eliminar el modal de opciones y los botones redundantes -->
+    
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html> 

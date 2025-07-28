@@ -1,0 +1,2445 @@
+:root {
+    --color-primary: #fce4ec;
+    --color-primary-dark: #f8bbd0;
+    --color-disabled: #f5f5f5;
+    --color-text: #333;
+    --color-border: #e0e0e0;
+    --border-radius: 8px;
+    --semester-width: 200px;
+}
+
+/* Transiciones suaves para el cambio de tema */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Variables de colores existentes */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: white;
+    color: var(--color-text);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    font-weight: 300;
+}
+
+.container {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+header {
+    margin-bottom: 1rem;
+    text-align: center;
+    background: white;
+    padding: 0.5rem;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+h1 {
+    margin-bottom: 1rem;
+    color: var(--color-text);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-weight: 400;
+}
+
+.progress-bar {
+    width: 200px;
+    height: 10px;
+    background-color: var(--color-disabled);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.progress {
+    height: 100%;
+    background: linear-gradient(90deg, 
+        var(--color-primary-dark), 
+        var(--color-primary), 
+        var(--color-primary-dark)
+    );
+    background-size: 200% 100%;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: progressShine 2s infinite linear;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary-dark, #d81b60) 30%, transparent);
+}
+
+@keyframes progressShine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Animación de pulso para notificaciones */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite ease-in-out;
+}
+
+/* Animación de brillo para elementos interactivos */
+@keyframes shine {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.shine-effect {
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255,255,255,0.2) 50%, 
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shine 2s infinite;
+}
+
+/* Mejorar animación de cursos cuando se marcan */
+@keyframes courseComplete {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.course-completing {
+    animation: courseComplete 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#mallaContainer {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    justify-content: flex-start;
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0.5rem;
+    align-items: flex-start;
+}
+
+.semester {
+    width: var(--semester-width);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    height: auto;
+}
+
+.semester-title {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid var(--color-primary);
+    text-align: center;
+    background: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.courses-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.course {
+    background-color: var(--color-primary);
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    border: 2px solid transparent;
+    transition: box-shadow 0.22s, transform 0.18s;
+}
+.course.animated {
+    animation: popCourse 0.32s cubic-bezier(.4,1.6,.4,1);
+}
+@keyframes popCourse {
+    0% { transform: scale(1); box-shadow: 0 0 0 #0000; }
+    40% { transform: scale(1.12); box-shadow: 0 4px 16px #0002; }
+    100% { transform: scale(1); box-shadow: 0 0 0 #0000; }
+}
+
+.course:hover {
+    box-shadow: 0 4px 18px var(--color-primary-dark)40;
+    transform: scale(1.04);
+    z-index: 2;
+}
+
+.course.disabled {
+    background-color: var(--color-disabled);
+    cursor: not-allowed;
+    opacity: 0.7;
+    border: 3px dashed #666;
+}
+
+.course.completed {
+    background-color: var(--color-primary-dark);
+}
+
+.course.completed .course-name {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    font-weight: 600;
+    position: relative;
+}
+
+.course-name {
+    font-weight: 400;
+    font-size: 0.8rem;
+    padding-right: 1.5rem;
+    line-height: 1.2;
+}
+
+.course-status {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    font-size: 1rem;
+    color: #FF1493;
+}
+
+footer {
+    text-align: center;
+    padding: 0.3rem 0;
+    background: white;
+    border-top: 1px solid var(--color-border);
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #666;
+    font-weight: 300;
+    line-height: 1;
+    height: min-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+footer p {
+    margin: 0;
+    padding: 0;
+}
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    background: rgba(34,34,34,0.85);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 400;
+    box-shadow: 0 2px 8px #0002;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+.toast.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.toast h2 {
+    color: #FF69B4;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.toast p {
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.toast p:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, 100%); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translate(-50%, 0); }
+    to { opacity: 0; transform: translate(-50%, 100%); }
+}
+
+/* Estilos para pantallas grandes */
+@media screen and (max-width: 1600px) {
+    :root {
+        --semester-width: 180px;
+    }
+    
+    .course {
+        min-height: 50px;
+    }
+}
+
+@media screen and (max-width: 1366px) {
+    :root {
+        --semester-width: 160px;
+    }
+    
+    .course-name {
+        font-size: 0.75rem;
+    }
+}
+
+/* Estilos para tablets */
+@media screen and (max-width: 1024px) {
+    :root {
+        --semester-width: 140px;
+    }
+
+    .course {
+        min-height: 70px;
+    }
+
+    .course-name {
+        font-size: 0.7rem;
+    }
+
+    h1 {
+        font-size: 1.2rem;
+    }
+}
+
+/* Estilos para móviles */
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 0.5rem;
+    }
+
+    h1 {
+        font-size: 1.1rem;
+        padding: 0 0.5rem;
+    }
+
+    .semester-title {
+        font-size: 1rem;
+    }
+
+    .progress-container {
+        width: 100%;
+    }
+
+    .progress-bar {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    footer {
+        padding: 0.25rem 0;
+        font-size: 0.7rem;
+    }
+
+    .toast {
+        padding: 1rem;
+        font-size: 0.85rem;
+        max-width: 95%;
+    }
+
+    .toast h2 {
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .toast p {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Estilos para móviles en modo portrait */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    #mallaContainer {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0.5rem;
+        align-items: stretch;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .semester {
+        width: 100%;
+        max-width: none;
+    }
+
+    .course {
+        min-height: 50px;
+    }
+
+    .course-name {
+        font-size: 0.9rem;
+    }
+    
+
+    
+    /* Estilos específicos para el horario en móvil */
+    .modal-horario-content {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        height: 90vh !important;
+        max-height: 90vh !important;
+        margin: 5vh auto !important;
+        padding: 10px !important;
+    }
+    
+    .horario-visual-container {
+        flex-direction: column !important;
+        height: calc(90vh - 120px) !important;
+        gap: 10px !important;
+    }
+    
+    .horario-materias-lista {
+        width: 100% !important;
+        max-height: 30vh !important;
+        overflow-y: auto !important;
+        order: 1 !important;
+    }
+    
+    .horario-visual-grid {
+        width: 100% !important;
+        height: calc(60vh - 50px) !important;
+        overflow: auto !important;
+        order: 2 !important;
+    }
+    
+    .horario-visual-table {
+        min-width: 600px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .horario-visual-table th, 
+    .horario-visual-table td {
+        height: 30px !important;
+        padding: 2px !important;
+    }
+    
+    .horario-visual-table th {
+        height: 28px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .horario-visual-table .hora-label {
+        width: 50px !important;
+        min-width: 50px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .bloque-horario {
+        min-width: 80px !important;
+        height: 30px !important;
+    }
+    
+    .bloque-horario .materia-asignada {
+        font-size: 0.7rem !important;
+        padding: 1px 3px !important;
+        margin: 1px 0 !important;
+    }
+    
+    .materia-draggable {
+        font-size: 0.8rem !important;
+        padding: 5px 8px !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .horario-modal-header {
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+        padding: 0 5px !important;
+    }
+    
+    .horario-modal-left {
+        width: 100% !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    #selectorSemestreVisualContainer {
+        width: 100% !important;
+        max-width: none !important;
+    }
+    
+    .horario-modal-actions {
+        width: 100% !important;
+        justify-content: center !important;
+        gap: 8px !important;
+    }
+    
+    #editarHorarioBtn, 
+    #descargarHorarioJpgBtn {
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
+        flex: 1 !important;
+        max-width: 150px !important;
+    }
+    
+    .close-horario-modal {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 1.5rem !important;
+    }
+    
+    .horario-materias-lista h3 {
+        font-size: 1rem !important;
+        margin-bottom: 8px !important;
+    }
+}
+
+/* Estilos para móviles en modo landscape */
+@media screen and (max-width: 900px) and (orientation: landscape) {
+    :root {
+        --semester-width: 120px;
+    }
+
+    .container {
+        padding: 0.25rem;
+    }
+
+    header {
+        margin-bottom: 0.5rem;
+        padding: 0.25rem;
+    }
+
+    h1 {
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .controls {
+        margin-bottom: 0.25rem;
+    }
+
+    .course {
+        min-height: 40px;
+        padding: 0.25rem;
+    }
+
+    .course-name {
+        font-size: 0.7rem;
+    }
+
+    .semester-title {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .courses-grid {
+        gap: 0.25rem;
+    }
+
+    #mallaContainer {
+        padding: 0.25rem;
+        gap: 0.25rem;
+    }
+
+    footer {
+        padding: 0.2rem 0;
+        font-size: 0.7rem;
+        margin-top: 0.25rem;
+    }
+    
+
+    
+    /* Estilos específicos para el horario en landscape */
+    .modal-horario-content {
+        width: 98vw !important;
+        max-width: 98vw !important;
+        height: 95vh !important;
+        max-height: 95vh !important;
+        margin: 2.5vh auto !important;
+        padding: 8px !important;
+    }
+    
+    .horario-visual-container {
+        height: calc(95vh - 100px) !important;
+        gap: 8px !important;
+    }
+    
+    .horario-materias-lista {
+        max-height: 25vh !important;
+        overflow-y: auto !important;
+    }
+    
+    .horario-visual-grid {
+        height: calc(70vh - 50px) !important;
+        overflow: auto !important;
+    }
+    
+    .horario-visual-table {
+        min-width: 500px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .horario-visual-table th, 
+    .horario-visual-table td {
+        height: 25px !important;
+        padding: 1px !important;
+    }
+    
+    .horario-visual-table th {
+        height: 24px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .horario-visual-table .hora-label {
+        width: 45px !important;
+        min-width: 45px !important;
+        font-size: 0.65rem !important;
+    }
+    
+    .bloque-horario {
+        min-width: 70px !important;
+        height: 25px !important;
+    }
+    
+    .bloque-horario .materia-asignada {
+        font-size: 0.65rem !important;
+        padding: 1px 2px !important;
+        margin: 0 !important;
+    }
+    
+    .materia-draggable {
+        font-size: 0.75rem !important;
+        padding: 4px 6px !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .horario-modal-header {
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+        padding: 0 4px !important;
+    }
+    
+    .horario-modal-left {
+        gap: 6px !important;
+    }
+    
+    .horario-modal-actions {
+        gap: 6px !important;
+    }
+    
+    #editarHorarioBtn, 
+    #descargarHorarioJpgBtn {
+        padding: 6px 12px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .close-horario-modal {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 1.3rem !important;
+    }
+    
+    .horario-materias-lista h3 {
+        font-size: 0.9rem !important;
+        margin-bottom: 6px !important;
+    }
+}
+
+/* Estilos para scroll */
+::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-dark);
+}
+
+/* Mejoras para experiencia táctil en móviles */
+@media (pointer: coarse) {
+    .materia-draggable,
+    .materia-asignada,
+    .bloque-horario {
+        touch-action: manipulation;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    
+    .materia-draggable:active,
+    .materia-asignada:active {
+        transform: scale(0.95);
+        transition: transform 0.1s;
+    }
+    
+    .bloque-horario.drop-hover {
+        transform: scale(1.05);
+        transition: transform 0.1s;
+    }
+    
+    /* Efectos visuales para arrastre */
+    .bloque-horario.drag-hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 4px 15px rgba(216, 27, 96, 0.3) !important;
+        border: 2px solid rgba(216, 27, 96, 0.5) !important;
+        transition: all 0.2s ease !important;
+        background: rgba(216, 27, 96, 0.05) !important;
+    }
+    
+
+}
+
+/* Prevenir zoom en inputs y elementos interactivos en móviles */
+@media screen and (max-width: 768px) {
+    input, select, textarea, button {
+        font-size: 16px !important;
+    }
+    
+    .modal-horario {
+        touch-action: manipulation;
+    }
+    
+    .modal-horario-content {
+        touch-action: manipulation;
+    }
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    position: relative;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: modalFadeIn 0.3s;
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0.5rem;
+    line-height: 0.5;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.close-button:hover {
+    background-color: var(--color-primary);
+    color: #333;
+}
+
+.modal-body {
+    text-align: center;
+}
+
+.modal-body h2 {
+    color: #FF1493;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.modal-body p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 300;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .modal-body h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+    }
+
+    .modal-body p {
+        font-size: 1rem;
+    }
+
+    .close-button {
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+} 
+
+/* Estilo para el input de nota promedio */
+.grade-input-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.grade-input-container input[type="number"] {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+/* Estilo para la sección de perfil */
+.profile-section {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    z-index: 10;
+}
+#downloadNotasBtn {
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#downloadNotasBtn:hover {
+    background: #388e3c;
+} 
+
+.nota-materia {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #222;
+    margin-top: 6px;
+    margin-bottom: 2px;
+    text-align: center;
+    letter-spacing: 1px;
+    width: 100%;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+} 
+
+.tooltip-prereq {
+    position: fixed;
+    background: rgba(34,34,34,0.95);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: 500;
+    z-index: 1000;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(5px) scale(0.9);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tooltip-prereq.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* Sombra del tooltip de nota con color personalizado - sigue el mouse */
+.tooltip-nota {
+    position: fixed;
+    background: linear-gradient(135deg, var(--color-primary-dark, #d81b60), var(--color-primary, #f06292));
+    color: #000;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 0.95em;
+    font-weight: 600;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary-dark, #d81b60) 30%, transparent);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(15px);
+    transform: scale(0.8) translateY(10px);
+    max-width: 200px;
+}
+
+.tooltip-nota.show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.course.unchecking {
+    animation: uncheckCourse 0.32s cubic-bezier(.4,1.6,.4,1);
+}
+@keyframes uncheckCourse {
+    0% { transform: scale(1); opacity: 1; }
+    30% { transform: scale(0.95) rotate(-2deg); opacity: 0.7; }
+    60% { transform: scale(1.05) rotate(2deg); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+} 
+
+.course.unlocked {
+    animation: unlockCourse 0.38s cubic-bezier(.4,1.6,.4,1);
+}
+@keyframes unlockCourse {
+    0% { box-shadow: 0 0 0 #00e67600; background: inherit; }
+    40% { box-shadow: 0 0 16px #00e67688; background: #e8f5e9; }
+    100% { box-shadow: 0 0 0 #00e67600; background: inherit; }
+}
+.course.locked {
+    animation: lockCourse 0.38s cubic-bezier(.4,1.6,.4,1);
+}
+@keyframes lockCourse {
+    0% { box-shadow: 0 0 0 #d32f2f00; background: inherit; }
+    40% { box-shadow: 0 0 16px #d32f2f88; background: #ffebee; }
+    100% { box-shadow: 0 0 0 #d32f2f00; background: inherit; }
+} 
+
+.course.prereq-shake {
+    animation: prereqShake 0.38s cubic-bezier(.36,1.6,.4,1);
+}
+@keyframes prereqShake {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-7px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
+} 
+
+#horarioSection {
+    margin: 40px auto 30px auto;
+    max-width: 700px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px #0001;
+    padding: 28px 24px 20px 24px;
+}
+#horarioSection h2 {
+    text-align: center;
+    margin-bottom: 18px;
+    font-size: 1.5em;
+    color: #d81b60;
+}
+.horario-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+.horario-form select, .horario-form input[type="time"] {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #bbb;
+    font-size: 1em;
+}
+.horario-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+.horario-table th, .horario-table td {
+    border: 1px solid #eee;
+    padding: 7px 10px;
+    text-align: center;
+}
+.horario-table th {
+    background: #f8bbd0;
+    color: #333;
+}
+.horario-table td {
+    background: #fce4ec;
+}
+.horario-remove-btn {
+    background: #d32f2f;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 10px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background 0.2s;
+}
+.horario-remove-btn:hover {
+    background: #b71c1c;
+} 
+
+#horarioVisualSection {
+    margin: 40px auto 30px auto;
+    max-width: 1100px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px #0001;
+    padding: 28px 24px 20px 24px;
+}
+#horarioVisualSection h2 {
+    text-align: center;
+    margin-bottom: 18px;
+    font-size: 1.5em;
+    color: #1976d2;
+}
+.horario-visual-container {
+    display: flex;
+    gap: 24px;
+}
+.horario-materias-lista {
+    min-width: 180px;
+    max-width: 220px;
+    background: var(--color-primary-dark, #f8bbd0);
+    border-radius: 8px;
+    padding: 12px 10px;
+    height: fit-content;
+    position: relative;
+}
+.horario-materias-lista h3 {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    color: #111 !important;
+    text-align: center;
+}
+.materia-draggable {
+    background: #fff;
+    border: 2px solid var(--color-primary-dark, #d81b60);
+    border-radius: 6px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+    font-size: 1em;
+    color: #000;
+    font-weight: 500;
+    cursor: grab;
+    box-shadow: 0 2px 8px #0001;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.materia-draggable:active {
+    background: var(--color-primary, #fce4ec);
+    box-shadow: 0 4px 16px var(--color-primary-dark, #d81b60, 0.13);
+}
+.horario-visual-grid {
+    flex: 1;
+    overflow-x: auto;
+}
+.horario-visual-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.horario-visual-table th, .horario-visual-table td {
+    border: 1px solid #eee;
+    text-align: center;
+    padding: 0;
+    height: 38px;
+    position: relative;
+}
+/* Encabezado de la tabla de horario visual */
+.horario-visual-table th {
+    background: var(--color-primary, #f8bbd0);
+    color: var(--color-text, #333);
+    font-size: 1em;
+    font-weight: 600;
+    height: 36px;
+}
+.horario-visual-table .hora-label {
+    background: var(--color-primary-dark, #f8bbd0);
+    color: var(--color-text, #333);
+    font-size: 0.98em;
+    font-weight: 500;
+    width: 70px;
+    min-width: 70px;
+    border-right: 2px solid #fff;
+}
+.hora-super {
+    background: var(--color-primary-dark, #f8bbd0);
+    color: var(--color-primary-dark, #d81b60);
+    font-size: 1.08em;
+    font-weight: 600;
+    text-align: center;
+}
+.bloque-horario {
+    background: #fff;
+    min-width: 120px;
+    height: 38px;
+    transition: background 0.18s, box-shadow 0.18s;
+}
+.bloque-horario.drop-hover {
+    background: var(--color-primary, #e1f5fe);
+    box-shadow: 0 0 0 2px var(--color-primary-dark, #1976d2);
+}
+.bloque-horario .materia-asignada {
+    background: var(--color-primary-dark, #d81b60);
+    color: #000;
+    border-radius: 5px;
+    padding: 3px 7px;
+    font-size: 0.98em;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-block;
+    margin: 2px 0;
+    box-shadow: 0 1px 4px #0002;
+    transition: background 0.2s;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+.bloque-horario .materia-asignada:hover {
+    background: var(--color-primary, #ad1457);
+}
+.bloque-horario.ventana {
+    background: var(--color-primary, #f3e5f5) !important;
+    color: var(--color-primary-dark, #ad1457) !important;
+    pointer-events: none;
+} 
+
+#selectorSemestreVisualContainer {
+    max-width: 600px;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+}
+#selectorSemestreVisualContainer label {
+    color: #000;
+}
+#selectorSemestreVisualContainer select {
+    font-size: 1em;
+    padding: 4px 10px;
+    border-radius: 5px;
+    border: 1px solid #bbb;
+} 
+
+#toggleHorarioBtn {
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: background 0.2s;
+}
+#toggleHorarioBtn:hover {
+    background: #0d47a1;
+}
+#selectorSemestreVisualContainer,
+#horarioVisualSection {
+    display: none;
+}
+#selectorSemestreVisualContainer.active,
+#horarioVisualSection.active {
+    display: block;
+} 
+
+/* Botones principales */
+#downloadNotasBtn,
+#toggleHorarioBtn,
+#opcionesBtn,
+#descargarHorarioJpgBtn,
+#editarHorarioBtn,
+.close-horario-modal {
+    background: var(--color-primary-dark) !important;
+    color: var(--color-text, #fff) !important;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 28px;
+    font-size: 1.15em;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 14px;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary-dark, #d81b60) 20%, transparent);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+#downloadNotasBtn:hover,
+#toggleHorarioBtn:hover,
+#opcionesBtn:hover,
+#descargarHorarioJpgBtn:hover,
+#editarHorarioBtn:hover,
+.close-horario-modal:hover {
+    background: var(--color-primary) !important;
+    color: var(--color-text, #fff) !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--color-primary-dark, #d81b60) 30%, transparent);
+}
+
+#downloadNotasBtn:active,
+#toggleHorarioBtn:active,
+#opcionesBtn:active,
+#descargarHorarioJpgBtn:active,
+#editarHorarioBtn:active,
+.close-horario-modal:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary-dark, #d81b60) 25%, transparent);
+}
+
+/* Tooltips personalizados */
+.tooltip-prereq {
+    background: var(--color-primary-dark, #222);
+    color: var(--color-text, #fff);
+}
+/* Estilo duplicado removido - usando el estilo principal del tooltip */
+
+/* Ajuste para botones de acciones en el modal de horario */
+.horario-modal-actions button {
+    background: var(--color-primary-dark) !important;
+    color: var(--color-text, #fff) !important;
+}
+.horario-modal-actions button:hover {
+    background: var(--color-primary) !important;
+    color: var(--color-text, #fff) !important;
+    opacity: 0.9;
+} 
+
+/* Modal de horario: asegurar visibilidad */
+.modal-horario {
+    display: none;
+    position: fixed;
+    z-index: 30000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(34,34,34,0.45);
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+.modal-horario.active {
+    display: flex;
+}
+
+/* Título del modal de opciones con color personalizado */
+.opciones-modal h2 {
+    color: var(--color-primary-dark, #d81b60) !important;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+} 
+
+/* Ajuste para el modal de horario */
+.modal-horario-content {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 6px 32px #0003;
+    padding: 32px 18px 24px 18px;
+    max-width: 1200px;
+    width: 98vw;
+    max-height: 92vh;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+#horarioVisualSection {
+    display: block;
+    width: 100%;
+    max-width: 1100px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px #0001;
+    padding: 28px 24px 20px 24px;
+    margin: 0 auto;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+/* Estilos conflictivos removidos - el tooltip ahora sigue el mouse */ 
+
+.horario-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+    padding: 0 8px;
+    position: relative;
+    flex-wrap: wrap;
+}
+.horario-modal-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+#selectorSemestreVisualContainer {
+    flex: 1;
+    min-width: 180px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#selectorSemestreVisualContainer label {
+    color: #000;
+    font-weight: 500;
+    margin-right: 6px;
+    font-size: 1em;
+}
+#selectorSemestreVisualContainer select {
+    font-size: 1em;
+    padding: 4px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--color-primary-dark, #bbb);
+    background: #fff;
+    color: var(--color-text, #333);
+}
+.horario-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.horario-modal-actions button {
+    margin: 0 !important;
+    order: unset;
+}
+.close-horario-modal {
+    position: static;
+    margin: 0;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+}
+
+@media screen and (max-width: 768px) {
+    .horario-modal-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+} 
+    .horario-modal-left {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    #selectorSemestreVisualContainer {
+        flex-direction: column;
+        align-items: stretch;
+        min-width: 0;
+        gap: 4px;
+    }
+    .horario-modal-actions {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 8px;
+}
+} 
+
+.horario-visual-table .hora-label.ventana,
+.bloque-horario.ventana .hora-label,
+tr .hora-label.ventana {
+    background: var(--color-primary, #f3e5f5) !important;
+    color: #222 !important;
+    font-weight: 600;
+} 
+
+/* 1. Letras de materias en horario visual */
+.bloque-horario .materia-asignada {
+    background: var(--color-primary-dark, #d81b60);
+    color: #000 !important;
+    border-radius: 5px;
+    padding: 3px 7px;
+    font-size: 0.98em;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-block;
+    margin: 2px 0;
+    box-shadow: 0 1px 4px #0002;
+    transition: background 0.2s;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* 2. Botón cerrar redondo y color del tema */
+.close-horario-modal {
+    background: var(--color-primary-dark, #d81b60) !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 50% !important;
+    width: 38px !important;
+    height: 38px !important;
+    aspect-ratio: 1 / 1;
+    font-size: 1.5rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px #0001;
+    transition: background 0.18s, box-shadow 0.18s, transform 0.13s;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    cursor: pointer !important;
+    z-index: 10;
+}
+.close-horario-modal:hover {
+    background: var(--color-primary, #ad1457) !important;
+    color: #fff !important;
+    opacity: 0.9;
+}
+
+/* 3. Grid de colores en personalización */
+.colores-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+.color-opcion {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    cursor: pointer;
+    box-shadow: 0 1px 4px #0001;
+    transition: border 0.2s, box-shadow 0.2s;
+    display: inline-block;
+    aspect-ratio: 1 / 1;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+.color-opcion.seleccionado {
+    border: 3px solid var(--color-primary-dark, #d81b60);
+    box-shadow: 0 2px 8px #0002;
+} 
+
+.opciones-dropdown {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    min-width: 220px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px #0002, 0 1.5px 6px #0001;
+    padding: 10px 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: fadeInDropdown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: top right;
+}
+
+/* Animación de entrada mejorada */
+@keyframes fadeInDropdown {
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px) scale(0.95);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+        box-shadow: 0 8px 32px #0002, 0 1.5px 6px #0001;
+    }
+}
+
+/* Animación de salida */
+.opciones-dropdown.closing {
+    animation: fadeOutDropdown 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes fadeOutDropdown {
+    from { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+    }
+    to { 
+        opacity: 0; 
+        transform: translateY(-8px) scale(0.96);
+    }
+}
+.opciones-dropdown button {
+    background: none;
+    border: none;
+    color: #222;
+    font-size: 1.08em;
+    padding: 12px 22px;
+    text-align: left;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateX(-10px);
+    animation: slideInButton 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Animación escalonada para los botones */
+.opciones-dropdown button:nth-child(1) { animation-delay: 0.05s; }
+.opciones-dropdown button:nth-child(2) { animation-delay: 0.1s; }
+.opciones-dropdown button:nth-child(3) { animation-delay: 0.15s; }
+.opciones-dropdown button:nth-child(4) { animation-delay: 0.2s; }
+
+@keyframes slideInButton {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+.opciones-dropdown button:hover {
+    background: var(--color-primary, #f8bbd0);
+    color: var(--color-primary-dark, #d81b60);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.opciones-dropdown button:active {
+    background: var(--color-primary-dark, #d81b60);
+    color: #fff;
+    transform: translateX(2px) scale(0.98);
+}
+.opciones-dropdown #dropdownCerrarSesionBtn {
+    color: #e74c3c;
+    font-weight: 600;
+}
+.opciones-dropdown #dropdownCerrarSesionBtn:hover {
+    background: #fdecea;
+    color: #c0392b;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
+}
+.opciones-dropdown #dropdownCerrarSesionBtn:active {
+    transform: translateX(2px) scale(0.98);
+    background: #e74c3c;
+    color: #fff;
+} 
+
+.personalizacion-panel {
+    position: absolute;
+    top: 70px;
+    right: 40px;
+    min-width: 320px;
+    max-width: 360px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px #0002, 0 1.5px 6px #0001;
+    padding: 24px 22px 18px 22px;
+    z-index: 2100;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeInDropdown 0.18s;
+}
+.personalizacion-panel h2 {
+    color: var(--color-primary-dark, #d81b60) !important;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+.personalizacion-panel .opcion-grupo {
+    margin-bottom: 14px;
+}
+.personalizacion-panel h3 {
+    font-size: 1.08em;
+    margin-bottom: 7px;
+    color: #222;
+    font-weight: 600;
+}
+.personalizacion-panel select {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1.5px solid #ccc;
+    font-size: 1em;
+    margin-bottom: 2px;
+}
+.personalizacion-panel .colores-grid {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.personalizacion-panel .opciones-acciones button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    background: var(--color-primary-dark, #d81b60);
+    color: #fff;
+    border: none;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: background 0.15s;
+    cursor: pointer;
+}
+.personalizacion-panel .opciones-acciones button:hover {
+    background: var(--color-primary-dark, #d81b60);
+    color: #fff;
+}
+
+/* Panel de administración */
+.admin-panel {
+    position: absolute;
+    top: 70px;
+    right: 40px;
+    min-width: 380px;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px #0002, 0 1.5px 6px #0001;
+    padding: 24px 22px 18px 22px;
+    z-index: 2200;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeInDropdown 0.18s;
+}
+
+.admin-panel h2 {
+    color: var(--color-primary-dark, #d81b60) !important;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-form label {
+    font-size: 1em;
+    font-weight: 600;
+    color: #222;
+}
+
+.admin-form input,
+.admin-form select {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid #ccc;
+    font-size: 1em;
+    transition: border-color 0.2s;
+}
+
+.admin-form input:focus,
+.admin-form select:focus {
+    outline: none;
+    border-color: var(--color-primary-dark, #d81b60);
+}
+
+.admin-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.admin-actions button {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.admin-actions button:first-child {
+    background: var(--color-primary-dark, #d81b60);
+    color: #fff;
+}
+
+.admin-actions button:first-child:hover {
+    background: #c2185b;
+}
+
+.admin-actions button:last-child {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.admin-actions button:last-child:hover {
+    background: #e0e0e0;
+}
+
+/* Checkbox personalizado */
+.checkbox-group {
+    margin: 16px 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+    background: var(--color-primary-dark, #d81b60);
+    border-color: var(--color-primary-dark, #d81b60);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.checkbox-group small {
+    color: #6b7280;
+    font-size: 0.85em;
+    margin-left: 28px;
+    display: block;
+}
+
+/* Ventana de cuentas creadas */
+.modal-cuentas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.modal-cuentas-content {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px #0002;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    animation: modalFadeIn 0.3s;
+}
+
+.modal-cuentas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    background: var(--color-primary, #f8bbd0);
+}
+
+.modal-cuentas-header h2 {
+    color: var(--color-primary-dark, #d81b60);
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.close-cuentas-modal {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--color-primary-dark, #d81b60);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.close-cuentas-modal:hover {
+    background: rgba(216, 27, 96, 0.1);
+}
+
+.modal-cuentas-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.cuenta-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.cuenta-item:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.cuenta-info {
+    flex: 1;
+}
+
+.cuenta-nombre {
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-badge {
+    background: linear-gradient(135deg, var(--color-primary-dark, #d81b60), var(--color-primary, #f06292));
+    color: white;
+    font-size: 0.7em;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.cuenta-acciones {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-borrar {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-borrar:hover {
+    background: #fecaca;
+    border-color: #f87171;
+    transform: translateY(-1px);
+}
+
+.cuenta-detalles {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.cuenta-usuario {
+    font-family: monospace;
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+.cuenta-carrera {
+    color: var(--color-primary-dark, #d81b60);
+    font-weight: 500;
+}
+
+/* Ocultar elementos hasta que se carguen los datos de Firebase */
+.progress,
+#opcionesBtn,
+#downloadNotasBtn,
+#toggleHorarioBtn,
+#descargarHorarioJpgBtn,
+.close-horario-modal,
+.opciones-dropdown button {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Mostrar elementos cuando los datos estén cargados */
+body.datos-cargados .progress,
+body.datos-cargados #opcionesBtn,
+body.datos-cargados #downloadNotasBtn,
+body.datos-cargados #toggleHorarioBtn,
+body.datos-cargados #descargarHorarioJpgBtn,
+body.datos-cargados .close-horario-modal,
+body.datos-cargados .opciones-dropdown button {
+    opacity: 1;
+} 
+
+/* === ESTILOS PARA LOGIN MODERNO === */
+
+.login-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-container.show {
+    display: flex;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1), 
+                0 8px 25px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 420px;
+    max-width: 90vw;
+    animation: loginCardAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes loginCardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.login-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.login-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.login-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    z-index: 2;
+    transition: color 0.3s ease;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 16px 16px 16px 50px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.input-group input:focus + .input-icon,
+.input-group:focus-within .input-icon {
+    color: #667eea;
+}
+
+.login-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    margin-top: 8px;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.login-button:active {
+    transform: translateY(0);
+}
+
+.login-error {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border-left: 4px solid #dc2626;
+    display: none;
+    animation: errorShake 0.5s ease-in-out;
+}
+
+.login-error:not(:empty) {
+    display: block;
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.login-footer {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.demo-accounts h4 {
+    margin: 0 0 16px 0;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.demo-account-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.demo-account {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.demo-account:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.demo-account strong {
+    display: block;
+    color: #1f2937;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.demo-account small {
+    color: #6b7280;
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .login-card {
+        width: 90vw;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        width: 95vw;
+        max-width: none;
+        padding: 30px 24px;
+    }
+    
+    .login-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .demo-account-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 360px) {
+    .login-card {
+        width: 98vw;
+        padding: 24px 20px;
+    }
+    
+    .login-header h1 {
+        font-size: 1.6rem;
+    }
+}
+
+/* === FIN ESTILOS LOGIN === */ 
+
+/* Para pantallas muy grandes */
+@media (min-width: 1400px) {
+    .login-card {
+        width: 450px;
+        padding: 48px;
+    }
+    
+    .login-header h1 {
+        font-size: 2.4rem;
+    }
+    
+    .login-header p {
+        font-size: 1.1rem;
+    }
+}
+
+/* ===== ANIMACIONES PARA EL HORARIO ===== */
+
+/* Animación de entrada para materias draggables */
+@keyframes materiaAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.materia-draggable {
+    animation: materiaAppear 0.3s ease-out;
+}
+
+/* Animación de hover para materias draggables */
+.materia-draggable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+/* Animación de feedback al arrastrar */
+.materia-draggable:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* Animación de entrada para materias asignadas */
+@keyframes materiaAsignadaAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.bloque-horario .materia-asignada {
+    animation: materiaAsignadaAppear 0.3s ease-out;
+}
+
+/* Animación de hover para materias asignadas */
+.bloque-horario .materia-asignada:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+/* Animación de feedback al arrastrar materias asignadas */
+.bloque-horario .materia-asignada:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+/* Animación de drop hover mejorada */
+.bloque-horario.drop-hover {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+/* ===== X DE ELIMINACIÓN ===== */
+
+/* Contenedor de la X de eliminación */
+.delete-zone {
+    position: absolute;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(255, 71, 87, 0.3);
+    z-index: 10001;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.delete-zone.show {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    pointer-events: all;
+}
+
+.delete-zone.hover {
+    background: linear-gradient(135deg, #ff3742 0%, #ff2f3a 100%);
+    transform: translateX(-50%) scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+}
+
+/* Icono X */
+.delete-zone svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+    stroke-width: 3;
+}
+
+/* Animación de pulso cuando está en hover */
+@keyframes deletePulse {
+    0% {
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.05);
+    }
+    100% {
+        transform: translateX(-50%) scale(1);
+    }
+}
+
+.delete-zone.hover {
+    animation: deletePulse 0.6s ease-in-out infinite;
+}
+
+/* Animación de eliminación */
+@keyframes deleteSuccess {
+    0% {
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.2);
+    }
+    100% {
+        transform: translateX(-50%) scale(0);
+        opacity: 0;
+    }
+}
+
+.delete-zone.success {
+    animation: deleteSuccess 0.5s ease-out forwards;
+    transform: translateX(-50%) scale(0);
+}
+
+/* Feedback visual cuando se arrastra sobre la zona de eliminación */
+.materia-draggable.dragging-over-delete,
+.bloque-horario .materia-asignada.dragging-over-delete {
+    opacity: 0.5;
+    transform: scale(0.9);
+    transition: all 0.2s ease;
+}
+
+/* Animación de eliminación de materia */
+.materia-asignada.deleting {
+    animation: deleteSuccess 0.5s ease-out forwards;
+}
+
+/* Estilo para elementos que se están arrastrando */
+.materia-draggable.dragging,
+.bloque-horario .materia-asignada.dragging {
+    opacity: 0.7;
+    transform: scale(0.95);
+    transition: all 0.2s ease;
+    cursor: grabbing;
+} 
