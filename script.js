@@ -105,7 +105,7 @@ function actualizarTituloUsuario() {
 }
 
 
-let USER_ID = localStorage.getItem('currentUser') || 'admin'; // Recuperar usuario de localStorage
+let USER_ID = localStorage.getItem('currentUser') || null; // Recuperar usuario de localStorage
 
 // Variable para controlar cuándo pueden activarse los tooltips de prerrequisitos
 let tooltipsPrereqHabilitados = false;
