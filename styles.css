@@ -3055,3 +3055,24 @@ body.datos-cargados .opciones-dropdown button {
         box-shadow: none !important;
     }
 } 
+
+@media screen and (max-width: 1024px) {
+    .horario-modal-header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1001 !important;
+        background: #fff !important;
+        box-shadow: 0 2px 8px #0001 !important;
+    }
+    .close-horario-modal {
+        z-index: 1100 !important;
+        position: relative !important;
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 2rem !important;
+        background: #fff !important;
+        border-radius: 50% !important;
+        border: 1px solid #eee !important;
+        box-shadow: 0 2px 8px #0002 !important;
+    }
+} 

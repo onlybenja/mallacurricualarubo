@@ -2456,6 +2456,9 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarLogin();
         }
     });
+    
+    const horarioModal = document.getElementById('horarioVisualModal');
+    if (horarioModal) horarioModal.classList.remove('active');
 }); 
 
 
