@@ -5,6 +5,21 @@ let fuenteActual = configuracion.fuentes[0];
 let completedCourses = new Set();
 let courseGrades = {};
 
+// Detectar si es un dispositivo táctil
+const isTouchDevice = () => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+};
+
+// Variable global para el estado táctil
+const touchState = {
+    isTouchDevice: isTouchDevice(),
+    isDragging: false,
+    draggedElement: null,
+    touchStartTime: 0,
+    touchStartX: 0,
+    touchStartY: 0
+};
+
 // Función para mostrar mensajes toast
 function showToast(message) {
     const toast = document.getElementById('toast');
@@ -13,6 +28,23 @@ function showToast(message) {
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
+}
+
+// Función para manejar eventos táctiles de manera consistente
+function handleTouchEvent(event, callback) {
+    if (touchState.isTouchDevice) {
+        event.preventDefault();
+        callback(event);
+    }
+}
+
+// Función para mejorar la precisión del drop en dispositivos táctiles
+function getTouchPosition(event) {
+    const touch = event.touches ? event.touches[0] : event.changedTouches[0];
+    return {
+        x: touch.clientX,
+        y: touch.clientY
+    };
 }
 
 // Función para aplicar personalización
@@ -72,7 +104,7 @@ function actualizarTituloUsuario() {
     }
 }
 
-// --- NUEVO: Guardar y cargar perfil en Firebase ---
+
 let USER_ID = localStorage.getItem('currentUser') || 'admin'; // Recuperar usuario de localStorage
 
 // Variable para controlar cuándo pueden activarse los tooltips de prerrequisitos
@@ -185,6 +217,25 @@ function cargarUsuariosDesdeFirebase() {
         const savedUser = localStorage.getItem('currentUser');
         if (savedUser && savedUser !== 'admin' && usuarios[savedUser]) {
             console.log('🔄 Usuario encontrado en localStorage después de cargar Firebase:', savedUser);
+            
+            // Verificar si el usuario es administrador
+            const esAdmin = usuarios[savedUser].esAdmin;
+            
+            // Si es administrador, verificar si hay otros administradores
+            if (esAdmin) {
+                const otrosAdmins = Object.keys(usuarios).filter(uid => 
+                    uid !== savedUser && uid !== 'admin' && usuarios[uid] && usuarios[uid].esAdmin
+                );
+                
+                if (otrosAdmins.length > 0) {
+                    console.log('⚠️ Usuario administrador encontrado pero hay otros administradores. No se hará auto-login.');
+                    // Limpiar el usuario guardado para forzar login manual
+                    localStorage.removeItem('currentUser');
+                    return;
+                }
+            }
+            
+            // Si no es administrador o no hay otros administradores, proceder con auto-login
             USER_ID = savedUser;
             
             // Verificar si el login no se ha mostrado aún
@@ -198,52 +249,35 @@ function cargarUsuariosDesdeFirebase() {
 }
 
 function guardarPerfilEnFirebase() {
-    console.log('=== INICIANDO GUARDADO EN FIREBASE ===');
-    console.log('Usuario actual:', USER_ID);
-    console.log('Carrera actual:', carreraActual);
-    console.log('Color actual:', colorActual);
-    console.log('Fuente actual:', fuenteActual);
-
-    console.log('Cursos completados:', Array.from(completedCourses));
-    console.log('Notas de cursos:', courseGrades);
+    if (!USER_ID || USER_ID === 'admin') {
+        return;
+    }
     
     const datosAGuardar = {
         carreraActual,
         colorActual,
         fuenteActual,
-
         completedCourses: Array.from(completedCourses),
-        courseGrades
+        courseGrades,
+        horario: horarioVisualData,
+        semestreSeleccionado: semestreVisualSeleccionado,
+        modoEdicion: modoEdicionHorario
     };
     
-    console.log('Datos a guardar en Firebase:', datosAGuardar);
-    
-    db.ref('perfiles/' + USER_ID).set(datosAGuardar).then(() => {
-        console.log('✅ Perfil guardado exitosamente en Firebase');
-        console.log('Ruta en Firebase: perfiles/' + USER_ID);
-    }).catch((error) => {
-        console.error('❌ Error al guardar perfil en Firebase:', error);
-        console.error('Detalles del error:', error.message);
+    db.ref('perfiles/' + USER_ID).set(datosAGuardar).catch((error) => {
+        console.error('Error al guardar perfil en Firebase:', error);
     });
 }
 function cargarPerfilDeFirebase(callback) {
-    console.log('=== INICIANDO CARGA DESDE FIREBASE ===');
-    console.log('Usuario actual:', USER_ID);
-    console.log('Ruta en Firebase: perfiles/' + USER_ID);
+    if (!USER_ID) {
+        if (callback) callback();
+        return;
+    }
     
     db.ref('perfiles/' + USER_ID).once('value').then(snap => {
         const data = snap.val();
-        console.log('Datos recibidos de Firebase:', data);
         
         if (data) {
-            console.log('✅ Datos encontrados en Firebase');
-            console.log('Carrera anterior:', carreraActual, '-> Nueva:', data.carreraActual);
-            console.log('Color anterior:', colorActual?.nombre, '-> Nuevo:', data.colorActual?.nombre);
-            console.log('Fuente anterior:', fuenteActual?.nombre, '-> Nueva:', data.fuenteActual?.nombre);
-
-            console.log('Cursos completados anteriores:', completedCourses.size, '-> Nuevos:', data.completedCourses?.length || 0);
-            console.log('Notas anteriores:', Object.keys(courseGrades).length, '-> Nuevas:', Object.keys(data.courseGrades || {}).length);
-            
             const carreraAnterior = carreraActual;
             carreraActual = data.carreraActual || carreraActual;
             colorActual = data.colorActual || colorActual;
@@ -252,36 +286,28 @@ function cargarPerfilDeFirebase(callback) {
             completedCourses = new Set(data.completedCourses || []);
             courseGrades = data.courseGrades || {};
             
-            console.log('✅ Datos cargados exitosamente');
-            
-            // Si cambió la carrera, limpiar horario
-            if (carreraAnterior !== carreraActual) {
-                console.log('🔄 Cambio de carrera detectado, limpiando horario...');
+            // Cargar horario desde el mismo perfil
+            if (data.horario) {
+                horarioVisualData = data.horario;
+                semestreVisualSeleccionado = data.semestreSeleccionado || 1;
+                modoEdicionHorario = data.modoEdicion || false;
+            } else {
                 horarioVisualData = [];
                 semestreVisualSeleccionado = 1;
                 modoEdicionHorario = false;
-                // Guardar horario limpio
-                saveHorarioVisualData(horarioVisualData);
             }
-        } else {
-            console.log('⚠️ No se encontraron datos en Firebase para este usuario');
         }
         
-        // Cargar horario después de cargar el perfil
-        cargarHorarioDeFirebase(() => {
-            if (callback) {
-                console.log('Ejecutando callback después de cargar datos y horario...');
-                callback();
-            }
-        });
+        if (callback) callback();
     }).catch((error) => {
-        console.error('❌ Error al cargar perfil desde Firebase:', error);
-        console.error('Detalles del error:', error.message);
+        console.error('Error al cargar perfil desde Firebase:', error);
         
-        // Intentar cargar horario incluso si falla el perfil
-        cargarHorarioDeFirebase(() => {
-            if (callback) callback();
-        });
+        // Usar valores por defecto si falla la carga
+        horarioVisualData = [];
+        semestreVisualSeleccionado = 1;
+        modoEdicionHorario = false;
+        
+        if (callback) callback();
     });
 }
 // Sobrescribir funciones locales para usar Firebase
@@ -981,116 +1007,34 @@ function cargarOpcionesActuales() {
 
 }
 
-// --- HORARIO ---
+
 const HORARIO_VISUAL_KEY = 'horarioVisualRamos';
 
 // Variable global para almacenar el horario del usuario actual
 let horarioVisualData = [];
 
 function getHorarioVisualData() {
-    console.log('📊 getHorarioVisualData() llamado, horario actual:', horarioVisualData);
     // Asegurar que siempre devuelva un array válido
     if (!horarioVisualData || !Array.isArray(horarioVisualData)) {
-        console.log('⚠️ horarioVisualData no es válido, inicializando como array vacío');
         horarioVisualData = [];
     }
     return horarioVisualData;
 }
 
 function saveHorarioVisualData(data) {
-    console.log('💾 Guardando horario:', data);
-    console.log('👤 Usuario actual:', USER_ID);
+    if (!USER_ID || USER_ID === 'admin') {
+        return;
+    }
+    
+    if (!data || !Array.isArray(data)) {
+        return;
+    }
+    
     horarioVisualData = data;
-    // Guardar horario y preferencias en Firebase por usuario
-    const horarioCompleto = {
-        horario: data,
-        semestreSeleccionado: semestreVisualSeleccionado,
-        modoEdicion: modoEdicionHorario
-    };
-    console.log('📤 Enviando a Firebase:', horarioCompleto);
-    db.ref('horarios/' + USER_ID).set(horarioCompleto).then(() => {
-        console.log('✅ Horario y preferencias guardados en Firebase para usuario:', USER_ID);
-    }).catch((error) => {
-        console.error('❌ Error al guardar horario en Firebase:', error);
-    });
+    guardarPerfilEnFirebase();
 }
 
-function cargarHorarioDeFirebase(callback) {
-    console.log('🔄 Cargando horario desde Firebase para usuario:', USER_ID);
-    db.ref('horarios/' + USER_ID).once('value').then(snap => {
-        const data = snap.val();
-        console.log('📥 Datos recibidos de Firebase:', data);
-        if (data) {
-            // Si es el formato nuevo (con preferencias)
-            if (data.horario) {
-                horarioVisualData = data.horario;
-                semestreVisualSeleccionado = data.semestreSeleccionado || 1;
-                modoEdicionHorario = data.modoEdicion || false;
-                console.log('✅ Horario y preferencias cargados desde Firebase:', data);
-                console.log('📊 Horario cargado:', horarioVisualData);
-            } else {
-                // Formato antiguo (solo horario)
-                horarioVisualData = data;
-                console.log('✅ Horario cargado desde Firebase (formato antiguo):', data);
-                console.log('📊 Horario cargado:', horarioVisualData);
-            }
-            
-            // Validar y limpiar materias que no existen en la carrera actual
-            limpiarHorarioMateriasInvalidas();
-        } else {
-            horarioVisualData = [];
-            console.log('⚠️ No se encontró horario en Firebase, usando valores por defecto');
-        }
-        if (callback) callback();
-    }).catch((error) => {
-        console.error('❌ Error al cargar horario desde Firebase:', error);
-        horarioVisualData = [];
-        if (callback) callback();
-    });
-}
 
-// Función para limpiar materias que no existen en la carrera actual
-function limpiarHorarioMateriasInvalidas() {
-    console.log('🧹 Validando materias del horario contra la carrera actual...');
-    
-    // Obtener todas las materias válidas de la carrera actual
-    const mallaData = convertirMallaASemestres(obtenerDatosCarrera().malla);
-    const materiasValidas = new Set();
-    
-    mallaData.forEach(semestre => {
-        semestre.courses.forEach(curso => {
-            materiasValidas.add(curso.id);
-        });
-    });
-    
-    console.log('📚 Materias válidas en la carrera actual:', Array.from(materiasValidas));
-    
-    // Limpiar horario de materias inválidas
-    let materiasEliminadas = 0;
-    if (horarioVisualData && Array.isArray(horarioVisualData)) {
-        horarioVisualData.forEach(semestreData => {
-            if (semestreData && semestreData.bloques && Array.isArray(semestreData.bloques)) {
-                const bloquesOriginales = [...semestreData.bloques];
-                semestreData.bloques = semestreData.bloques.filter(bloque => {
-                    if (!materiasValidas.has(bloque.materia)) {
-                        console.log('🗑️ Eliminando materia inválida del horario:', bloque.materia);
-                        materiasEliminadas++;
-                        return false;
-                    }
-                    return true;
-                });
-            }
-        });
-    }
-    
-    if (materiasEliminadas > 0) {
-        console.log(`✅ Se eliminaron ${materiasEliminadas} materias inválidas del horario`);
-        // Guardar el horario limpio
-        saveHorarioVisualData(horarioVisualData);
-    } else {
-        console.log('✅ Todas las materias del horario son válidas para la carrera actual');
-    }
-}
 const DIAS_VISUAL = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const BLOQUES_VISUAL = [
     {inicio: '08:30', fin: '09:10', ventana: false},
@@ -1134,17 +1078,7 @@ function renderSelectorSemestreVisual() {
     }
     select.onchange = function() {
         semestreVisualSeleccionado = parseInt(this.value);
-        // Guardar preferencias automáticamente
-        const horarioCompleto = {
-            horario: horarioVisualData,
-            semestreSeleccionado: semestreVisualSeleccionado,
-            modoEdicion: modoEdicionHorario
-        };
-        db.ref('horarios/' + USER_ID).set(horarioCompleto).then(() => {
-            console.log('✅ Preferencias de semestre guardadas en Firebase');
-        }).catch((error) => {
-            console.error('❌ Error al guardar preferencias:', error);
-        });
+        guardarPerfilEnFirebase();
         renderHorarioVisualSection();
     };
     container.appendChild(label);
@@ -1176,17 +1110,7 @@ function renderHorarioVisualSection() {
         editarBtn.innerHTML = modoEdicionHorario ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:7px;"><polyline points="20 6 9 17 4 12"/></svg>Listo' : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:7px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar';
         editarBtn.onclick = () => {
             modoEdicionHorario = !modoEdicionHorario;
-            // Guardar preferencias automáticamente
-            const horarioCompleto = {
-                horario: horarioVisualData,
-                semestreSeleccionado: semestreVisualSeleccionado,
-                modoEdicion: modoEdicionHorario
-            };
-            db.ref('horarios/' + USER_ID).set(horarioCompleto).then(() => {
-                console.log('✅ Preferencias de modo edición guardadas en Firebase');
-            }).catch((error) => {
-                console.error('❌ Error al guardar preferencias:', error);
-            });
+            guardarPerfilEnFirebase();
             renderHorarioVisualSection();
         };
     }
@@ -1207,7 +1131,7 @@ function renderHorarioVisualSection() {
         const semestreEsImpar = (s + 1) % 2 === 1;
         // Solo incluir materias de semestres del mismo tipo (impar/par)
         if (semestreEsImpar === semestreActualEsImpar) {
-            mallaData[s].courses.forEach(c => {
+        mallaData[s].courses.forEach(c => {
                 if (!completedCourses.has(c.id) && prereqsAprobados(c)) {
                     if (!materiasPrevias.some(m => m.id === c.id)) materiasPrevias.push(c);
                 }
@@ -1218,29 +1142,10 @@ function renderHorarioVisualSection() {
     // Combinar materias del semestre actual + materias previas disponibles
     const materiasDisponibles = [...materiasPrevias, ...materiasSemestre];
     
-    console.log('📚 Materias disponibles para el horario:');
-    console.log('- Semestre actual:', semestreVisualSeleccionado, semestreVisualSeleccionado % 2 === 1 ? '(impar)' : '(par)');
-    console.log('- Total materias en el semestre:', semestre.courses.length);
-    console.log('- Materias completadas en el semestre:', semestre.courses.filter(c => completedCourses.has(c.id)).length);
-    console.log('- Materias con prerrequisitos no cumplidos:', semestre.courses.filter(c => !prereqsAprobados(c)).length);
-    console.log('- Materias del semestre disponibles:', materiasSemestre.length);
-    console.log('- Materias previas disponibles (mismo tipo impar/par):', materiasPrevias.length);
-    console.log('- Total materias disponibles:', materiasDisponibles.length);
-    console.log('- Carrera actual:', carreraActual);
-    console.log('- Cursos completados total:', completedCourses.size);
-    
-    // Debug específico para Medicina Veterinaria semestre 1
-    if (carreraActual === 'Medicina Veterinaria' && semestreVisualSeleccionado === 1) {
-        console.log('🔍 DEBUG Medicina Veterinaria Semestre 1:');
-        console.log('- Todas las materias del semestre:', semestre.courses.map(c => ({id: c.id, name: c.name, completed: completedCourses.has(c.id), prereqsOk: prereqsAprobados(c)})));
-        console.log('- Materias completadas:', Array.from(completedCourses));
-    }
-    
     // Verificar si no hay materias disponibles
     if (materiasDisponibles.length === 0) {
         // Si no hay materias no aprobadas, mostrar todas las materias del semestre para permitir arrastrar de vuelta
         const todasLasMaterias = semestre.courses;
-        console.log('⚠️ No hay materias no aprobadas, mostrando todas las materias del semestre para permitir arrastrar de vuelta');
         
         // Lista de materias
         const lista = document.createElement('div');
@@ -1316,122 +1221,10 @@ function renderHorarioVisualSection() {
         
         // Configurar drag & drop
         if (modoEdicionHorario) {
-            configurarDragAndDrop(section, todasLasMaterias);
+            configurarDragAndDrop(section, todasLasMaterias, horarioData, horarioDataAll, modoEdicionHorario);
         }
         
         return;
-    }
-    
-    // Función auxiliar para configurar drag & drop
-    function configurarDragAndDrop(section, materiasDisponibles) {
-        const deleteZone = document.getElementById('deleteZone');
-        
-        // Arrastrar desde lista
-        section.querySelectorAll('.materia-draggable').forEach(el => {
-            el.addEventListener('dragstart', e => {
-                e.dataTransfer.setData('text/plain', el.dataset.materiaId);
-                e.dataTransfer.setData('from-list', 'true');
-                el.classList.add('dragging');
-                deleteZone.classList.add('show');
-            });
-            
-            el.addEventListener('dragend', e => {
-                el.classList.remove('dragging');
-                deleteZone.classList.remove('show', 'hover');
-                document.querySelectorAll('.dragging-over-delete').forEach(el => {
-                    el.classList.remove('dragging-over-delete');
-                });
-            });
-        });
-        
-        // Drop en bloques
-        section.querySelectorAll('.bloque-horario:not(.ventana)').forEach(bloque => {
-            bloque.addEventListener('dragover', e => {
-                e.preventDefault();
-                bloque.classList.add('drop-hover');
-            });
-            bloque.addEventListener('dragleave', e => {
-                bloque.classList.remove('drop-hover');
-            });
-            bloque.addEventListener('drop', e => {
-                e.preventDefault();
-                bloque.classList.remove('drop-hover');
-                const materiaId = e.dataTransfer.getData('text/plain');
-                const fromList = e.dataTransfer.getData('from-list') === 'true';
-                
-                // Solo permitir materias disponibles (del semestre actual o previas no aprobadas del mismo tipo impar/par)
-                if (!materiasDisponibles.some(m => m.id === materiaId)) {
-                    console.log('❌ Materia no permitida:', materiaId);
-                    const tipoSemestre = semestreVisualSeleccionado % 2 === 1 ? 'impar' : 'par';
-                    // Mostrar mensaje al usuario
-                    showToast(`Esta materia no está disponible para cursar en semestres ${tipoSemestre}es`);
-                    return;
-                }
-                
-                const materiaEnEsteBloque = horarioData.bloques.find(h => 
-                    h.dia === bloque.dataset.dia && 
-                    h.inicio === bloque.dataset.inicio && 
-                    h.fin === bloque.dataset.fin
-                );
-                
-                if (materiaEnEsteBloque) {
-                    materiaEnEsteBloque.materia = materiaId;
-                } else {
-                    horarioData.bloques.push({ 
-                        materia: materiaId, 
-                        dia: bloque.dataset.dia, 
-                        inicio: bloque.dataset.inicio, 
-                        fin: bloque.dataset.fin 
-                    });
-                }
-                
-                saveHorarioVisualData(horarioDataAll);
-                renderHorarioVisualSection();
-            });
-        });
-        
-        // Zona de eliminación
-        deleteZone.addEventListener('dragover', e => {
-            e.preventDefault();
-            deleteZone.classList.add('hover');
-            document.querySelectorAll('.dragging').forEach(el => {
-                el.classList.add('dragging-over-delete');
-            });
-        });
-        
-        deleteZone.addEventListener('dragleave', e => {
-            deleteZone.classList.remove('hover');
-            document.querySelectorAll('.dragging-over-delete').forEach(el => {
-                el.classList.remove('dragging-over-delete');
-            });
-        });
-        
-        deleteZone.addEventListener('drop', e => {
-            e.preventDefault();
-            deleteZone.classList.remove('hover');
-            const materiaId = e.dataTransfer.getData('text/plain');
-            const fromList = e.dataTransfer.getData('from-list') === 'true';
-            
-            if (!fromList) {
-                const materiaAsignada = document.querySelector(`.materia-asignada[data-materia-id="${materiaId}"]`);
-                if (materiaAsignada) {
-                    const parent = materiaAsignada.closest('.bloque-horario');
-                    if (parent) {
-                        const dia = parent.dataset.dia, inicio = parent.dataset.inicio, fin = parent.dataset.fin;
-                        const idx = horarioData.bloques.findIndex(h => h.materia === materiaId && h.dia === dia && h.inicio === inicio && h.fin === fin);
-                        if (idx !== -1) {
-                            horarioData.bloques.splice(idx, 1);
-                            saveHorarioVisualData(horarioDataAll);
-                            renderHorarioVisualSection();
-                        }
-                    }
-                }
-            }
-            
-            setTimeout(() => {
-                deleteZone.classList.remove('show', 'success');
-            }, 500);
-        });
     }
     
     // Verificar si hay alguna materia asignada en el horario
@@ -1442,10 +1235,8 @@ function renderHorarioVisualSection() {
         horarioData = { semestre: semestreVisualSeleccionado, bloques: [] };
         horarioDataAll.push(horarioData);
         console.log('📝 Creando nuevo semestre en horario:', semestreVisualSeleccionado);
-        // Solo guardar si no es la primera vez que se carga
-        if (horarioDataAll.length > 1) {
-            saveHorarioVisualData(horarioDataAll);
-        }
+        // Guardar siempre para asegurar persistencia
+        saveHorarioVisualData(horarioDataAll);
     }
     
     // Contenedor principal
@@ -1465,18 +1256,18 @@ function renderHorarioVisualSection() {
         lista.appendChild(previasHeader);
         
         materiasPrevias.forEach(m => {
-            const matDiv = document.createElement('div');
+        const matDiv = document.createElement('div');
             matDiv.className = 'materia-draggable materia-previa';
-            matDiv.textContent = m.name;
+        matDiv.textContent = m.name;
             matDiv.draggable = modoEdicionHorario;
-            matDiv.dataset.materiaId = m.id;
+        matDiv.dataset.materiaId = m.id;
             if (modoEdicionHorario) {
-                matDiv.addEventListener('dragstart', e => {
-                    e.dataTransfer.setData('text/plain', m.id);
-                });
-            }
-            lista.appendChild(matDiv);
+        matDiv.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', m.id);
         });
+            }
+        lista.appendChild(matDiv);
+    });
     }
     
     // Agregar materias del semestre actual
@@ -1558,168 +1349,434 @@ function renderHorarioVisualSection() {
     container.appendChild(grid);
     section.appendChild(container);
     
-    // Drag & drop lógica SOLO si modoEdicionHorario
+    // Configurar drag & drop
     if (modoEdicionHorario) {
+        configurarDragAndDrop(section, materiasDisponibles, horarioData, horarioDataAll, modoEdicionHorario);
+    }
+    function configurarDragAndDrop(section, materiasDisponibles, horarioData, horarioDataAll, modoEdicionHorario) {
+        console.log('🚀 Configurando drag and drop - modoEdicionHorario:', modoEdicionHorario);
+        
         const deleteZone = document.getElementById('deleteZone');
+        let draggedElement = null;
+        let isDragging = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let ghostElement = null;
+        let currentMateriaId = null;
+        let currentFromList = false;
         
-        // Arrastrar desde lista
-        section.querySelectorAll('.materia-draggable').forEach(el => {
-            el.addEventListener('dragstart', e => {
-                e.dataTransfer.setData('text/plain', el.dataset.materiaId);
-                e.dataTransfer.setData('from-list', 'true'); // Marcar que viene de la lista
-                el.classList.add('dragging');
-                
-                // Mostrar zona de eliminación solo cuando se arrastra
-                deleteZone.classList.add('show');
-            });
+        // Función para manejar el drop
+        function handleDrop(target, materiaId, fromList) {
+            console.log('🎯 handleDrop llamado con:', { target, materiaId, fromList });
             
-            el.addEventListener('dragend', e => {
-                el.classList.remove('dragging');
-                deleteZone.classList.remove('show', 'hover');
-                
-                // Remover clases de feedback
-                document.querySelectorAll('.dragging-over-delete').forEach(el => {
-                    el.classList.remove('dragging-over-delete');
+            // Obtener materias disponibles del contexto actual
+            const datosCarrera = obtenerDatosCarrera();
+            if (!datosCarrera || !datosCarrera.malla) {
+                showToast('Error: No hay datos de carrera disponibles');
+                return;
+            }
+            
+            const mallaData = convertirMallaASemestres(datosCarrera.malla);
+            const semestre = mallaData[semestreVisualSeleccionado-1];
+            if (!semestre) {
+                showToast('Error: Semestre no válido');
+                return;
+            }
+            
+            // Recrear la lógica de materias disponibles
+            function prereqsAprobados(course) {
+                return course.prerequisites.length === 0 || course.prerequisites.every(pr => completedCourses.has(pr));
+            }
+            
+            const materiasSemestre = semestre.courses.filter(c => !completedCourses.has(c.id) && prereqsAprobados(c));
+            
+            let materiasPrevias = [];
+            const semestreActualEsImpar = semestreVisualSeleccionado % 2 === 1;
+            
+            for (let s = 0; s < semestreVisualSeleccionado-1; s++) {
+                const semestreEsImpar = (s + 1) % 2 === 1;
+                if (semestreEsImpar === semestreActualEsImpar) {
+                    mallaData[s].courses.forEach(c => {
+                        if (!completedCourses.has(c.id) && prereqsAprobados(c)) {
+                            if (!materiasPrevias.some(m => m.id === c.id)) materiasPrevias.push(c);
+                        }
+                    });
+                }
+            }
+            
+            const materiasDisponibles = [...materiasPrevias, ...materiasSemestre];
+            
+            if (!materiasDisponibles.some(m => m.id === materiaId)) {
+                console.log('❌ Materia no permitida:', materiaId);
+                const tipoSemestre = semestreVisualSeleccionado % 2 === 1 ? 'impar' : 'par';
+                showToast(`Esta materia no está disponible para cursar en semestres ${tipoSemestre}es`);
+                return;
+            }
+            
+            // Obtener datos del horario
+            const horarioDataAll = getHorarioVisualData();
+            let horarioData = horarioDataAll.find(h => h.semestre === semestreVisualSeleccionado);
+            if (!horarioData) {
+                horarioData = { semestre: semestreVisualSeleccionado, bloques: [] };
+                horarioDataAll.push(horarioData);
+            }
+            
+            // Asegurar que bloques existe
+            if (!horarioData.bloques) {
+                horarioData.bloques = [];
+            }
+            
+            const materiaEnEsteBloque = horarioData.bloques.find(h => 
+                h.dia === target.dataset.dia && 
+                h.inicio === target.dataset.inicio && 
+                h.fin === target.dataset.fin
+            );
+            
+            if (materiaEnEsteBloque) {
+                console.log('🔄 Reemplazando materia en bloque existente');
+                materiaEnEsteBloque.materia = materiaId;
+            } else {
+                console.log('➕ Agregando nueva materia al bloque');
+                horarioData.bloques.push({ 
+                    materia: materiaId, 
+                    dia: target.dataset.dia, 
+                    inicio: target.dataset.inicio, 
+                    fin: target.dataset.fin 
                 });
-            });
-        });
-        
-        // Hacer que la lista de materias también sea una zona de drop para eliminar
-        const listaMaterias = section.querySelector('.horario-materias-lista');
-        listaMaterias.addEventListener('dragover', e => {
-            e.preventDefault();
-            listaMaterias.classList.add('drop-hover');
-        });
-        
-        listaMaterias.addEventListener('dragleave', e => {
-            listaMaterias.classList.remove('drop-hover');
-        });
-        
-        listaMaterias.addEventListener('drop', e => {
-            e.preventDefault();
-            listaMaterias.classList.remove('drop-hover');
+            }
             
-            // Obtener la materia que se está arrastrando
-            const materiaId = e.dataTransfer.getData('text/plain');
-            const fromList = e.dataTransfer.getData('from-list') === 'true';
+            console.log('💾 Guardando horario...');
+            saveHorarioVisualData(horarioDataAll);
+            console.log('✅ Horario guardado');
             
-            // Solo eliminar si viene del horario (no de la lista)
+            console.log('🔄 Re-renderizando sección...');
+            renderHorarioVisualSection();
+            console.log('✅ Sección re-renderizada');
+            
+            showToast('Materia asignada correctamente');
+        }
+        
+        // Función para manejar la eliminación
+        function handleDelete(materiaId, fromList) {
+            console.log('🗑️ handleDelete llamado con:', { materiaId, fromList });
+            
             if (!fromList) {
-                console.log('🗑️ Eliminando materia específica del horario al arrastrar a la lista:', materiaId);
-                
-                // Obtener el bloque de origen desde el elemento arrastrado
-                const draggedElement = document.querySelector('.dragging');
-                if (draggedElement) {
-                    const parentBlock = draggedElement.closest('.bloque-horario');
-                    if (parentBlock) {
-                        const dia = parentBlock.dataset.dia;
-                        const inicio = parentBlock.dataset.inicio;
-                        const fin = parentBlock.dataset.fin;
+                const materiaAsignada = document.querySelector(`.materia-asignada[data-materia-id="${materiaId}"]`);
+                if (materiaAsignada) {
+                    const parent = materiaAsignada.closest('.bloque-horario');
+                    if (parent) {
+                        const dia = parent.dataset.dia, inicio = parent.dataset.inicio, fin = parent.dataset.fin;
                         
-                        // Encontrar y eliminar solo la instancia específica de esta materia en este bloque específico
-                        const idx = horarioData.bloques.findIndex(h => 
-                            h.materia === materiaId && 
-                            h.dia === dia && 
-                            h.inicio === inicio && 
-                            h.fin === fin
-                        );
+                        // Obtener datos del horario
+                        const horarioDataAll = getHorarioVisualData();
+                        let horarioData = horarioDataAll.find(h => h.semestre === semestreVisualSeleccionado);
+                        if (!horarioData) {
+                            horarioData = { semestre: semestreVisualSeleccionado, bloques: [] };
+                            horarioDataAll.push(horarioData);
+                        }
                         
+                        // Asegurar que bloques existe
+                        if (!horarioData.bloques) {
+                            horarioData.bloques = [];
+                        }
+                        
+                        const idx = horarioData.bloques.findIndex(h => h.materia === materiaId && h.dia === dia && h.inicio === inicio && h.fin === fin);
                         if (idx !== -1) {
+                            console.log('🗑️ Eliminando materia del índice:', idx);
                             horarioData.bloques.splice(idx, 1);
-                            console.log('✅ Materia específica eliminada del bloque:', dia, inicio, fin);
+                            
+                            console.log('💾 Guardando horario...');
+                            saveHorarioVisualData(horarioDataAll);
+                            console.log('✅ Horario guardado');
+                            
+                            console.log('🔄 Re-renderizando sección...');
+                            renderHorarioVisualSection();
+                            console.log('✅ Sección re-renderizada');
+                            
+                            showToast('Materia eliminada del horario');
                         }
                     }
                 }
-                
-                saveHorarioVisualData(horarioDataAll);
-                renderHorarioVisualSection();
+            } else {
+                showToast('Las materias de la lista no se pueden eliminar');
             }
-        });
+        }
         
-        // Arrastrar materia ya asignada (solo materias del semestre actual)
-        section.querySelectorAll('.materia-asignada').forEach(el => {
+        // Función para crear elemento fantasma
+        function createGhostElement(originalElement) {
+            const ghost = originalElement.cloneNode(true);
+            ghost.classList.add('dragging-ghost');
+            ghost.style.position = 'fixed';
+            ghost.style.zIndex = '10000';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '0.8';
+            ghost.style.transform = 'scale(1.1)';
+            ghost.style.transition = 'none';
+            document.body.appendChild(ghost);
+            return ghost;
+        }
+        
+        // Función para limpiar drag
+        function clearDrag() {
+            if (ghostElement) {
+                ghostElement.remove();
+                ghostElement = null;
+            }
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+                draggedElement = null;
+            }
+            isDragging = false;
+            currentMateriaId = null;
+            currentFromList = false;
+            
+            // Limpiar clases de hover
+            section.querySelectorAll('.bloque-horario').forEach(block => {
+                block.classList.remove('drop-hover', 'drag-hover');
+            });
+            deleteZone.classList.remove('show', 'hover');
+            document.querySelectorAll('.dragging-over-delete').forEach(el => {
+                el.classList.remove('dragging-over-delete');
+            });
+        }
+        
+        // Configurar eventos para materias draggables (mouse y touch)
+        section.querySelectorAll('.materia-draggable').forEach(el => {
+            // Eventos de mouse (drag & drop tradicional)
             el.addEventListener('dragstart', e => {
                 e.dataTransfer.setData('text/plain', el.dataset.materiaId);
-                e.dataTransfer.setData('from-list', 'false'); // Marcar que viene del horario
-                el._draggedFrom = el.closest('.bloque-horario');
+                e.dataTransfer.setData('from-list', 'true');
                 el.classList.add('dragging');
-                
-                // Mostrar zona de eliminación solo cuando se arrastra
                 deleteZone.classList.add('show');
             });
             
             el.addEventListener('dragend', e => {
                 el.classList.remove('dragging');
                 deleteZone.classList.remove('show', 'hover');
+                document.querySelectorAll('.dragging-over-delete').forEach(el => {
+                    el.classList.remove('dragging-over-delete');
+            });
+        });
+        
+            // Sistema de drag and drop táctil para móviles
+            el.addEventListener('touchstart', function(e) {
+                if (!modoEdicionHorario) return;
                 
-                // Remover clases de feedback
+            e.preventDefault();
+                
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                
+                currentMateriaId = this.dataset.materiaId;
+                currentFromList = true;
+                
+                console.log('👆 Iniciando drag táctil para materia:', currentMateriaId);
+                
+                // Crear elemento fantasma
+                ghostElement = createGhostElement(this);
+                ghostElement.style.left = touchStartX - 25 + 'px';
+                ghostElement.style.top = touchStartY - 25 + 'px';
+                
+                // Marcar como arrastrando
+                this.classList.add('dragging');
+                isDragging = true;
+                draggedElement = this;
+                
+                // Mostrar zona de eliminación
+                deleteZone.classList.add('show');
+                
+            }, { passive: false });
+        });
+        
+        // Configurar eventos para materias asignadas (mouse y touch)
+        section.querySelectorAll('.materia-asignada').forEach(el => {
+            // Eventos de mouse (drag & drop tradicional)
+            el.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', el.dataset.materiaId);
+                e.dataTransfer.setData('from-list', 'false');
+                el.classList.add('dragging');
+                deleteZone.classList.add('show');
+            });
+            
+            el.addEventListener('dragend', e => {
+                el.classList.remove('dragging');
+                deleteZone.classList.remove('show', 'hover');
                 document.querySelectorAll('.dragging-over-delete').forEach(el => {
                     el.classList.remove('dragging-over-delete');
                 });
             });
+            
+            // Sistema de drag and drop táctil para móviles
+            el.addEventListener('touchstart', function(e) {
+                if (!modoEdicionHorario) return;
+                
+                e.preventDefault();
+                
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                
+                currentMateriaId = this.dataset.materiaId;
+                currentFromList = false;
+                
+                console.log('👆 Iniciando drag táctil para materia asignada:', currentMateriaId);
+                
+                // Crear elemento fantasma
+                ghostElement = createGhostElement(this);
+                ghostElement.style.left = touchStartX - 25 + 'px';
+                ghostElement.style.top = touchStartY - 25 + 'px';
+                
+                // Marcar como arrastrando
+                this.classList.add('dragging');
+                isDragging = true;
+                draggedElement = this;
+                
+                // Mostrar zona de eliminación
+                deleteZone.classList.add('show');
+                
+            }, { passive: false });
         });
         
-        // Drop en bloques
+        // Eventos táctiles globales para el drag
+        document.addEventListener('touchmove', function(e) {
+            if (!isDragging || !ghostElement) return;
+            
+                e.preventDefault();
+            
+            const touch = e.touches[0];
+            const currentX = touch.clientX;
+            const currentY = touch.clientY;
+            
+            // Mover elemento fantasma
+            ghostElement.style.left = currentX - 25 + 'px';
+            ghostElement.style.top = currentY - 25 + 'px';
+            
+            // Encontrar elemento bajo el dedo
+            const elementUnderTouch = document.elementFromPoint(currentX, currentY);
+            
+            // Limpiar hover anterior
+            section.querySelectorAll('.bloque-horario').forEach(block => {
+                block.classList.remove('drop-hover', 'drag-hover');
+            });
+            deleteZone.classList.remove('hover');
+            document.querySelectorAll('.dragging-over-delete').forEach(el => {
+                el.classList.remove('dragging-over-delete');
+            });
+            
+            // Verificar si está sobre un bloque del horario
+            if (elementUnderTouch && elementUnderTouch.classList.contains('bloque-horario') && !elementUnderTouch.classList.contains('ventana')) {
+                elementUnderTouch.classList.add('drop-hover');
+                if (draggedElement) {
+                    draggedElement.classList.add('dragging-over-delete');
+                }
+            }
+            
+            // Verificar si está sobre la zona de eliminación
+            if (elementUnderTouch && elementUnderTouch.id === 'deleteZone') {
+                deleteZone.classList.add('hover');
+                if (draggedElement) {
+                    draggedElement.classList.add('dragging-over-delete');
+                }
+            }
+            
+        }, { passive: false });
+        
+        document.addEventListener('touchend', function(e) {
+            if (!isDragging || !ghostElement) return;
+                
+                e.preventDefault();
+                
+            const touch = e.changedTouches[0];
+            const endX = touch.clientX;
+            const endY = touch.clientY;
+            
+            // Encontrar elemento donde se soltó
+            const dropTarget = document.elementFromPoint(endX, endY);
+            
+            if (dropTarget) {
+                // Si se soltó en un bloque del horario
+                if (dropTarget.classList.contains('bloque-horario') && !dropTarget.classList.contains('ventana')) {
+                    console.log('🎯 Drop en bloque:', dropTarget.dataset.dia, dropTarget.dataset.inicio);
+                    handleDrop(dropTarget, currentMateriaId, currentFromList);
+                }
+                // Si se soltó en la zona de eliminación
+                else if (dropTarget.id === 'deleteZone') {
+                    console.log('🗑️ Drop en zona de eliminación');
+                    handleDelete(currentMateriaId, currentFromList);
+                }
+                // Si se soltó en la lista de materias
+                else if (dropTarget.closest('.horario-materias-lista')) {
+                    console.log('🗑️ Drop en lista de materias');
+                    // Solo eliminar si viene del horario (no de la lista)
+                    if (!currentFromList) {
+                        handleDelete(currentMateriaId, currentFromList);
+                    }
+                }
+            }
+            
+            // Limpiar drag
+            clearDrag();
+            
+        }, { passive: false });
+        
+        // Configurar eventos para bloques de horario (mouse y touch)
         section.querySelectorAll('.bloque-horario:not(.ventana)').forEach(bloque => {
+            console.log('🔧 Configurando eventos para bloque:', bloque.dataset.dia, bloque.dataset.inicio);
+            
+            // Eventos de mouse
             bloque.addEventListener('dragover', e => {
                 e.preventDefault();
                 bloque.classList.add('drop-hover');
             });
+            
             bloque.addEventListener('dragleave', e => {
                 bloque.classList.remove('drop-hover');
             });
+            
             bloque.addEventListener('drop', e => {
                 e.preventDefault();
                 bloque.classList.remove('drop-hover');
                 const materiaId = e.dataTransfer.getData('text/plain');
                 const fromList = e.dataTransfer.getData('from-list') === 'true';
-                console.log('🎯 Drop detectado para materia:', materiaId, 'desde lista:', fromList);
-                
-                // Solo permitir materias disponibles (del semestre actual o previas no aprobadas del mismo tipo impar/par)
-                if (!materiasDisponibles.some(m => m.id === materiaId)) {
-                    console.log('❌ Materia no permitida:', materiaId);
-                    const tipoSemestre = semestreVisualSeleccionado % 2 === 1 ? 'impar' : 'par';
-                    // Mostrar mensaje al usuario
-                    showToast(`Esta materia no está disponible para cursar en semestres ${tipoSemestre}es`);
-                    return;
-                }
-                
-                // Verificar si ya hay una materia en este bloque específico
-                const materiaEnEsteBloque = horarioData.bloques.find(h => 
-                    h.dia === bloque.dataset.dia && 
-                    h.inicio === bloque.dataset.inicio && 
-                    h.fin === bloque.dataset.fin
-                );
-                console.log('🔍 Materia en este bloque:', materiaEnEsteBloque);
-                
-                if (materiaEnEsteBloque) {
-                    // Si ya hay una materia en este bloque, siempre reemplazar
-                    console.log('🔄 Reemplazando materia en este bloque');
-                    materiaEnEsteBloque.materia = materiaId;
-                    console.log('✅ Materia reemplazada en:', bloque.dataset.dia, bloque.dataset.inicio);
-                } else {
-                    // Si no hay materia en este bloque, agregar la nueva
-                    horarioData.bloques.push({ 
-                        materia: materiaId, 
-                        dia: bloque.dataset.dia, 
-                        inicio: bloque.dataset.inicio, 
-                        fin: bloque.dataset.fin 
-                    });
-                    console.log('➕ Materia agregada a:', bloque.dataset.dia, bloque.dataset.inicio);
-                }
-                
-                console.log('💾 Guardando horario después de drop...');
-                saveHorarioVisualData(horarioDataAll);
-                renderHorarioVisualSection();
+                handleDrop(bloque, materiaId, fromList);
             });
         });
         
-        // La zona de eliminación elimina materias del horario
+        // Hacer que la lista de materias también sea una zona de drop para eliminar
+        const listaMaterias = section.querySelector('.horario-materias-lista');
+        if (listaMaterias) {
+            listaMaterias.addEventListener('dragover', e => {
+                e.preventDefault();
+                listaMaterias.classList.add('drop-hover');
+            });
+            
+            listaMaterias.addEventListener('dragleave', e => {
+                listaMaterias.classList.remove('drop-hover');
+            });
+            
+            listaMaterias.addEventListener('drop', e => {
+                e.preventDefault();
+                listaMaterias.classList.remove('drop-hover');
+                
+                // Obtener la materia que se está arrastrando
+                const materiaId = e.dataTransfer.getData('text/plain');
+                const fromList = e.dataTransfer.getData('from-list') === 'true';
+                
+                // Solo eliminar si viene del horario (no de la lista)
+                if (!fromList) {
+                    console.log('🗑️ Eliminando materia del horario al arrastrar a la lista:', materiaId);
+                    handleDelete(materiaId, fromList);
+                }
+            });
+        }
+        
+        // Configurar zona de eliminación
+        if (deleteZone) {
+            // Eventos de mouse para zona de eliminación
         deleteZone.addEventListener('dragover', e => {
             e.preventDefault();
             deleteZone.classList.add('hover');
-            
-            // Agregar feedback visual a elementos arrastrados
             document.querySelectorAll('.dragging').forEach(el => {
                 el.classList.add('dragging-over-delete');
             });
@@ -1727,8 +1784,6 @@ function renderHorarioVisualSection() {
         
         deleteZone.addEventListener('dragleave', e => {
             deleteZone.classList.remove('hover');
-            
-            // Remover feedback visual
             document.querySelectorAll('.dragging-over-delete').forEach(el => {
                 el.classList.remove('dragging-over-delete');
             });
@@ -1746,36 +1801,16 @@ function renderHorarioVisualSection() {
             
             // Obtener la materia que se está arrastrando
             const materiaId = e.dataTransfer.getData('text/plain');
-            
-            // Solo eliminar si es una materia que ya está en el horario
-            const materiaAsignada = document.querySelector(`.materia-asignada[data-materia-id="${materiaId}"]`);
-            if (materiaAsignada) {
-                materiaAsignada.classList.add('deleting');
+                const fromList = e.dataTransfer.getData('from-list') === 'true';
                 
-                setTimeout(() => {
-                    const parent = materiaAsignada.closest('.bloque-horario');
-                    if (parent) {
-                        const dia = parent.dataset.dia, inicio = parent.dataset.inicio, fin = parent.dataset.fin;
-                        const idx = horarioData.bloques.findIndex(h => h.materia === materiaId && h.dia === dia && h.inicio === inicio && h.fin === fin);
-                        if (idx !== -1) {
-                            horarioData.bloques.splice(idx, 1);
-                            saveHorarioVisualData(horarioDataAll);
-                            renderHorarioVisualSection();
-                        }
-                    }
-                }, 500);
-            }
+                // Usar la función handleDelete que ya tiene la lógica correcta
+                handleDelete(materiaId, fromList);
             
             // Ocultar zona de eliminación después de la animación
             setTimeout(() => {
                 deleteZone.classList.remove('show', 'success');
             }, 500);
         });
-    } else {
-        // Ocultar zona de eliminación cuando no está en modo edición
-        const deleteZone = document.getElementById('deleteZone');
-        if (deleteZone) {
-            deleteZone.classList.remove('show', 'hover', 'success');
         }
     }
 }
@@ -1899,7 +1934,7 @@ function ocultarLogin() {
     inicializarAplicacion();
 }
 
-// --- INICIO FIREBASE ---
+
 const firebaseConfig = {
   apiKey: "AIzaSyCKrOH4dxZ-gHkUqnotDLOvmNzWr8lyw2c",
   authDomain: "malla-curricular-4315c.firebaseapp.com",
@@ -1912,40 +1947,58 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-// --- FIN INICIO FIREBASE ---
+
+// Función de prueba para verificar conexión a Firebase
+
+
+
 
 // --- INICIO DE SESIÓN COMPARTIDA ---
 function iniciarSesionCompartida() {
-    console.log('🔐 Iniciando sesión compartida para usuario:', USER_ID);
     db.ref('sesionIniciada').set(true);
     inicializarAplicacion();
 }
 
 function cerrarSesion() {
-    console.log('🚪 Cerrando sesión...');
+    // Guardar el perfil del usuario actual antes de cerrar sesión
+    const usuarioActual = USER_ID;
+    if (usuarioActual && usuarioActual !== 'admin') {
+        guardarPerfilEnFirebase();
+    }
     
     // Limpiar localStorage
     localStorage.removeItem('currentUser');
     USER_ID = 'admin'; // Volver al usuario por defecto
     
-    // Limpiar horario y preferencias del usuario anterior
+    // Limpiar horario y preferencias para el usuario por defecto
     horarioVisualData = [];
     semestreVisualSeleccionado = 1;
     modoEdicionHorario = false;
     
+    // Guardar el estado limpio en Firebase para el usuario por defecto
+    const perfilAdmin = {
+        carreraActual: 'Ingeniería Civil',
+        colorActual: { nombre: 'Azul', primary: '#2196F3', secondary: '#1976D2' },
+        fuenteActual: { nombre: 'Roboto', family: 'Roboto, sans-serif' },
+        completedCourses: [],
+        courseGrades: {},
+        horario: [],
+        semestreSeleccionado: 1,
+        modoEdicion: false
+    };
+    db.ref('perfiles/' + USER_ID).set(perfilAdmin).catch((error) => {
+        console.error('Error al guardar estado limpio en Firebase:', error);
+    });
+    
     // Desactivar tooltips de prerrequisitos
     tooltipsPrereqHabilitados = false;
-    console.log('🚫 Tooltips de prerrequisitos desactivados al cerrar sesión');
     
     // Remover clase para ocultar elementos hasta la próxima carga
     document.body.classList.remove('datos-cargados');
-    console.log('✅ Clase datos-cargados removida - elementos ocultos');
     db.ref('sesionIniciada').set(false);
     
     // Mostrar login
     mostrarLogin();
-    
-    console.log('✅ Sesión cerrada correctamente');
 }
 
 // Función para borrar una cuenta
@@ -1953,13 +2006,12 @@ function borrarCuenta(usuarioId) {
     if (confirm(`¿Estás seguro de que quieres borrar la cuenta de usuario "${usuarioId}"? Esta acción no se puede deshacer.`)) {
         db.ref('usuarios/' + usuarioId).remove()
             .then(() => {
-                console.log('✅ Cuenta de usuario', usuarioId, 'borrada exitosamente.');
                 showToast(`Cuenta de usuario "${usuarioId}" borrada.`);
                 cargarUsuariosDesdeFirebase(); // Recargar la lista de cuentas
                 mostrarCuentasCreadas(); // Actualizar la visualización
             })
             .catch(error => {
-                console.error('❌ Error al borrar cuenta de usuario:', error);
+                console.error('Error al borrar cuenta de usuario:', error);
                 showToast('Error al borrar la cuenta.');
             });
     }
@@ -1967,24 +2019,18 @@ function borrarCuenta(usuarioId) {
 
 // Función de inicialización que carga datos de Firebase
 function inicializarAplicacion() {
-    console.log('🚀 Inicializando aplicación...');
-    console.log('Usuario actual:', USER_ID);
-    
     // Cargar perfil de Firebase
     cargarPerfilDeFirebase(() => {
-        console.log('✅ Datos cargados de Firebase, aplicando personalización...');
+        // Aplicar personalización (el horario ya se cargó con el perfil)
+        aplicarPersonalizacion();
         
-        // Aplicar personalización primero
-    aplicarPersonalizacion();
-    
         // Pequeño delay para asegurar que los estilos se apliquen
         setTimeout(() => {
-    createMalla();
-    updateProgress();
-    
+            createMalla();
+            updateProgress();
+            
             // Actualizar estados de cursos después de crear la malla
             setTimeout(() => {
-                console.log('🔄 Actualizando estados de cursos...');
                 document.querySelectorAll('.course').forEach(element => {
                     const id = element.dataset.courseId;
                     const mallaData = convertirMallaASemestres(obtenerDatosCarrera().malla);
@@ -1995,24 +2041,21 @@ function inicializarAplicacion() {
                         updateCourseTooltips(element, course);
                     }
                 });
-                console.log('✅ Estados de cursos actualizados');
             }, 50);
             
             // Inicializar componentes
             try {
-    inicializarModalOpciones();
+                inicializarModalOpciones();
             } catch (error) {
-                console.log('⚠️ Error al inicializar modal de opciones:', error.message);
+                console.log('Error al inicializar modal de opciones:', error.message);
             }
             
             try {
                 renderSelectorSemestreVisual();
                 renderHorarioVisualSection();
             } catch (error) {
-                console.log('⚠️ Error al renderizar horario:', error.message);
+                console.log('Error al renderizar horario:', error.message);
             }
-            
-            console.log('✅ Aplicación inicializada correctamente');
             
             // Habilitar tooltips de prerrequisitos después de 2 segundos
             habilitarTooltipsPrereq();
@@ -2078,10 +2121,169 @@ function inicializarEventosBasicos() {
     if (descargarHorarioJpgBtn) {
         descargarHorarioJpgBtn.onclick = async () => {
             const grid = document.querySelector('.horario-visual-grid');
-            if (!grid) return;
+            if (!grid) {
+                showToast('No se encontró el horario para descargar');
+                return;
+            }
             
-            // Código de descarga del horario...
-            console.log('Descargando horario...');
+            try {
+                console.log('Iniciando descarga del horario...');
+                
+                // Mostrar indicador de carga
+                descargarHorarioJpgBtn.textContent = 'Descargando...';
+                descargarHorarioJpgBtn.disabled = true;
+                
+                // Verificar que hay clases en el horario
+                const bloquesConClases = Array.from(grid.querySelectorAll('.bloque-horario')).filter(bloque => 
+                    bloque.querySelector('.materia-asignada')
+                );
+                
+                console.log('Bloques con clases encontrados:', bloquesConClases.length);
+                
+                if (bloquesConClases.length === 0) {
+                    showToast('No hay clases en el horario para descargar');
+                    return;
+                }
+                
+                console.log('Capturando horario con html2canvas...');
+                
+                // Verificar si hay clases el sábado
+                const bloquesSabado = Array.from(grid.querySelectorAll('.bloque-horario')).filter(bloque => 
+                    bloque.dataset.dia === 'Sábado' && bloque.querySelector('.materia-asignada')
+                );
+                
+                const tieneClasesSabado = bloquesSabado.length > 0;
+                console.log('¿Tiene clases el sábado?', tieneClasesSabado);
+                
+                // Encontrar la última fila con clases
+                const filas = Array.from(grid.querySelectorAll('tbody tr'));
+                let ultimaFilaConClases = 0;
+                
+                for (let i = 0; i < filas.length; i++) {
+                    const fila = filas[i];
+                    const bloquesEnFila = fila.querySelectorAll('.bloque-horario');
+                    const tieneClases = Array.from(bloquesEnFila).some(bloque => 
+                        bloque.querySelector('.materia-asignada')
+                    );
+                    if (tieneClases) {
+                        ultimaFilaConClases = i;
+                    }
+                }
+                
+                console.log('Última fila con clases:', ultimaFilaConClases);
+                
+                // Si no hay clases el sábado, ocultar la columna
+                let columnasSabado = [];
+                if (!tieneClasesSabado) {
+                    console.log('Ocultando columna del sábado...');
+                    
+                    // Ocultar todos los elementos de la columna del sábado
+                    columnasSabado = Array.from(grid.querySelectorAll('[data-dia="Sábado"]'));
+                    columnasSabado.forEach(columna => {
+                        columna.style.display = 'none';
+                    });
+                    
+                    // Ocultar el header del sábado (última columna del thead)
+                    const thead = grid.querySelector('thead tr');
+                    if (thead) {
+                        const headers = thead.querySelectorAll('th');
+                        if (headers.length > 0) {
+                            headers[headers.length - 1].style.display = 'none'; // Última columna (Sábado)
+                        }
+                    }
+                    
+                    // Ocultar toda la columna del sábado en el tbody
+                    const tbody = grid.querySelector('tbody');
+                    if (tbody) {
+                        const filas = tbody.querySelectorAll('tr');
+                        filas.forEach(fila => {
+                            const celdas = fila.querySelectorAll('td');
+                            if (celdas.length > 0) {
+                                // La última celda de cada fila es la del sábado (después de la celda de hora)
+                                celdas[celdas.length - 1].style.display = 'none';
+                            }
+                        });
+                    }
+                }
+                
+                // Ocultar filas vacías después de la última clase
+                console.log('Ocultando filas vacías después de la última clase...');
+                for (let i = ultimaFilaConClases + 1; i < filas.length; i++) {
+                    filas[i].style.display = 'none';
+                }
+                
+                // Esperar un momento para que se actualice el layout
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Usar html2canvas directamente en el horario original
+                const canvas = await html2canvas(grid, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: true
+                });
+                
+                // Restaurar la columna del sábado si se ocultó
+                if (!tieneClasesSabado) {
+                    console.log('Restaurando columna del sábado...');
+                    
+                    // Restaurar todos los elementos de la columna del sábado
+                    columnasSabado.forEach(columna => {
+                        columna.style.display = '';
+                    });
+                    
+                    // Restaurar el header del sábado (última columna del thead)
+                    const thead = grid.querySelector('thead tr');
+                    if (thead) {
+                        const headers = thead.querySelectorAll('th');
+                        if (headers.length > 0) {
+                            headers[headers.length - 1].style.display = ''; // Última columna (Sábado)
+                        }
+                    }
+                    
+                    // Restaurar toda la columna del sábado en el tbody
+                    const tbody = grid.querySelector('tbody');
+                    if (tbody) {
+                        const filas = tbody.querySelectorAll('tr');
+                        filas.forEach(fila => {
+                            const celdas = fila.querySelectorAll('td');
+                            if (celdas.length > 0) {
+                                // La última celda de cada fila es la del sábado (después de la celda de hora)
+                                celdas[celdas.length - 1].style.display = '';
+                            }
+                        });
+                    }
+                }
+                
+                // Restaurar filas vacías que se ocultaron
+                console.log('Restaurando filas vacías...');
+                const todasLasFilas = Array.from(grid.querySelectorAll('tbody tr'));
+                todasLasFilas.forEach(fila => {
+                    fila.style.display = '';
+                });
+                
+                console.log('Canvas creado, generando imagen...');
+                
+                // Convertir a imagen y descargar
+                const link = document.createElement('a');
+                link.download = `horario_semestre_${semestreVisualSeleccionado}_${USER_ID}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                
+                console.log('Descargando archivo...');
+                link.click();
+                
+                showToast('Horario descargado exitosamente');
+                console.log('Descarga completada');
+                
+            } catch (error) {
+                console.error('Error al descargar horario:', error);
+                showToast('Error al descargar el horario: ' + error.message);
+            } finally {
+                // Restaurar botón
+                descargarHorarioJpgBtn.textContent = 'Descargar Horario';
+                descargarHorarioJpgBtn.disabled = false;
+            }
         };
     }
     
@@ -2114,15 +2316,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser && savedUser !== 'admin') {
         console.log('🔄 Usuario encontrado en localStorage:', savedUser);
-        USER_ID = savedUser;
+        // No establecer USER_ID aquí, se hará después de verificar si hay otros administradores
         // El login automático se hará después de cargar usuarios de Firebase
     }
     
     // Mostrar login solo si no hay usuario guardado
     if (!savedUser || savedUser === 'admin') {
-        const loginContainer = document.getElementById('loginContainer');
-        if (loginContainer) {
-            loginContainer.classList.add('show');
+    const loginContainer = document.getElementById('loginContainer');
+    if (loginContainer) {
+        loginContainer.classList.add('show');
         }
     }
     
@@ -2182,7 +2384,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     );
                     
                     if (otrosAdmins.length > 0) {
-                        console.log('❌ Intento de login con admin/admin bloqueado - hay otros administradores');
                         const loginError = document.getElementById('loginError');
                         loginError.textContent = 'La cuenta admin por defecto está deshabilitada. Use una cuenta de administrador válida.';
                         loginError.style.display = 'block';
@@ -2201,20 +2402,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
                 }
-                console.log('🔐 Login exitoso para usuario:', user);
-                console.log('👤 Datos del usuario:', usuarios[user]);
+                
+                // Guardar el perfil del usuario anterior antes de cambiar (incluye horario)
+                const usuarioAnterior = USER_ID;
+                if (usuarioAnterior && usuarioAnterior !== user) {
+                    guardarPerfilEnFirebase();
+                }
                 
                 USER_ID = user; // Cambiar USER_ID al usuario logueado
                 localStorage.setItem('currentUser', user); // Guardar en localStorage
-                console.log('✅ USER_ID establecido a:', USER_ID);
                 
-                // Limpiar horario y preferencias del usuario anterior
-                horarioVisualData = [];
-                semestreVisualSeleccionado = 1;
-                modoEdicionHorario = false;
-                console.log('🧹 Horario limpiado para nuevo usuario');
-                
-                iniciarSesionCompartida();
+                // Cargar el perfil completo del nuevo usuario (incluye horario)
+                cargarPerfilDeFirebase(() => {
+                    iniciarSesionCompartida();
+                });
                 loginError.style.display = 'none';
                 showToast(`¡Bienvenido, ${usuarios[user].nombre}!`);
                 
@@ -2228,7 +2429,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             } else {
-                console.log('❌ Login fallido para usuario:', user);
                 const loginError = document.getElementById('loginError');
                 loginError.textContent = 'Usuario o contraseña incorrectos';
                 loginError.style.display = 'block';
@@ -2250,26 +2450,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Escuchar cambios en la sesión compartida
     db.ref('sesionIniciada').on('value', function(snapshot) {
-        console.log('📡 Cambio en sesión Firebase:', snapshot.val());
         if (snapshot.val() === true) {
-            console.log('✅ Sesión activa detectada, ocultando login...');
             ocultarLogin();
-            // NO duplicar la inicialización aquí - ya se hace en ocultarLogin()
         } else {
-            console.log('❌ Sesión inactiva, mostrando login...');
             mostrarLogin();
         }
     });
-    // NO aplicar personalización aquí - se hace después de cargar datos de Firebase
-    
-    // NO crear malla ni actualizar progreso aquí - se hace después de cargar datos de Firebase
-    
-    // NO inicializar modal de opciones aquí - se hace después de cargar datos de Firebase
-    
-    console.log('✅ Configuración inicial completada, esperando login...');
 }); 
 
-// --- Funciones para animaciones del desplegable ---
+
 function cerrarDropdownConAnimacion() {
     const opcionesDropdown = document.getElementById('opcionesDropdown');
     if (opcionesDropdown && opcionesDropdown.style.display !== 'none') {
@@ -2289,7 +2478,7 @@ function abrirDropdown() {
     }
 }
 
-// --- Menú desplegable de opciones ---
+
 document.addEventListener('DOMContentLoaded', () => {
     // Menú desplegable de opciones
     const opcionesBtn = document.getElementById('opcionesBtn');
@@ -2487,3 +2676,5 @@ document.addEventListener('DOMContentLoaded', () => {
         cerrarDropdownConAnimacion();
     };
 }); 
+
+
