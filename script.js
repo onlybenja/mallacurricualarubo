@@ -69,12 +69,9 @@ function aplicarPersonalizacion() {
     document.body.style.fontFamily = fuenteActual.valor;
     console.log('✅ Fuente aplicada:', fuenteActual.valor);
     
-    // Actualizar título con información del usuario
-    actualizarTituloUsuario();
-    
     // Actualizar footer
     const footer = document.getElementById('footerText');
-    if (footer) footer.textContent = `© 2024 Malla Curricular - ${carreraActual}. Todos los derechos reservados.`;
+    if (footer) footer.textContent = `© 2025 Malla Curricular - ${carreraActual}. Todos los derechos reservados.`;
     
 
     
@@ -92,15 +89,39 @@ function actualizarTituloUsuario() {
     
     if (titulo && usuarios[USER_ID]) {
         const usuario = usuarios[USER_ID];
-        titulo.textContent = `Malla - ${usuario.nombre} - ${usuario.carrera}`;
+        
+        // Usar la carrera del perfil si está disponible, sino usar la del usuario
+        const carreraAMostrar = carreraActual || usuario.carrera;
+        
+        titulo.textContent = `Malla - ${usuario.nombre} - ${carreraAMostrar}`;
         
         // Actualizar el nombre en el botón de perfil
         if (nombreUsuario) {
             nombreUsuario.textContent = usuario.nombre;
         }
         
-        // Actualizar también la carrera actual
+        // Solo actualizar carreraActual si no se ha cargado desde el perfil
+        if (!carreraActual) {
         carreraActual = usuario.carrera;
+    }
+}
+
+    // Actualizar visibilidad del botón de administración
+    actualizarVisibilidadAdmin();
+}
+
+// Función centralizada para manejar la visibilidad del botón de administración
+function actualizarVisibilidadAdmin() {
+    const dropdownAdminBtn = document.getElementById('dropdownAdminBtn');
+    if (dropdownAdminBtn) {
+        // BLOQUEAR COMPLETAMENTE EL ACCESO A ADMINISTRACIÓN PARA LA CUENTA ADMIN
+        if (USER_ID === 'admin') {
+            dropdownAdminBtn.style.display = 'none';
+        } else if (usuarios[USER_ID] && usuarios[USER_ID].esAdmin) {
+            dropdownAdminBtn.style.display = 'flex';
+        } else {
+            dropdownAdminBtn.style.display = 'none';
+        }
     }
 }
 
@@ -217,6 +238,13 @@ function cargarUsuariosDesdeFirebase() {
         const savedUser = localStorage.getItem('currentUser');
         if (savedUser && savedUser !== 'admin' && usuarios[savedUser]) {
             console.log('🔄 Usuario encontrado en localStorage después de cargar Firebase:', savedUser);
+            
+            // BLOQUEAR COMPLETAMENTE EL AUTO-LOGIN DE LA CUENTA ADMIN
+            if (savedUser === 'admin') {
+                console.log('⚠️ Intento de auto-login con cuenta admin bloqueado.');
+                localStorage.removeItem('currentUser');
+                return;
+            }
             
             // Verificar si el usuario es administrador
             const esAdmin = usuarios[savedUser].esAdmin;
@@ -1916,6 +1944,16 @@ function ocultarLogin() {
         console.log('🔄 Usuario recuperado de localStorage:', USER_ID);
     }
     
+    // VERIFICACIÓN DE SEGURIDAD: Si es admin, cerrar sesión instantáneamente
+    if (USER_ID === 'admin') {
+        console.log('⚠️ Detección de sesión admin al ocultar login - cerrando instantáneamente...');
+        showToast('Acceso denegado: Cuenta de administrador deshabilitada');
+        setTimeout(() => {
+            cerrarSesion();
+        }, 1000);
+        return;
+    }
+    
     // Limpiar tooltips antes de mostrar aplicación
     limpiarTooltips();
     
@@ -1965,8 +2003,9 @@ const db = firebase.database();
 
 // --- INICIO DE SESIÓN COMPARTIDA ---
 function iniciarSesionCompartida() {
-    db.ref('sesionIniciada').set(true);
-    inicializarAplicacion();
+    // No cambiar sesionIniciada para evitar afectar a otros usuarios
+    // db.ref('sesionIniciada').set(true);
+    // inicializarAplicacion(); // Ya no es necesario, se llama desde ocultarLogin()
 }
 
 function cerrarSesion() {
@@ -2005,7 +2044,8 @@ function cerrarSesion() {
     
     // Remover clase para ocultar elementos hasta la próxima carga
     document.body.classList.remove('datos-cargados');
-    db.ref('sesionIniciada').set(false);
+    // No cambiar sesionIniciada para evitar afectar a otros usuarios
+    // db.ref('sesionIniciada').set(false);
     
     // Mostrar login
     mostrarLogin();
@@ -2029,6 +2069,16 @@ function borrarCuenta(usuarioId) {
 
 // Función de inicialización que carga datos de Firebase
 function inicializarAplicacion() {
+    // VERIFICACIÓN DE SEGURIDAD: Si es admin, cerrar sesión instantáneamente
+    if (USER_ID === 'admin') {
+        console.log('⚠️ Detección de sesión admin durante inicialización - cerrando instantáneamente...');
+        showToast('Acceso denegado: Cuenta de administrador deshabilitada');
+        setTimeout(() => {
+            cerrarSesion();
+        }, 1000);
+        return;
+    }
+    
     // Asegurar que el modal del horario esté cerrado al inicializar
     const horarioModal = document.getElementById('horarioVisualModal');
     if (horarioModal) {
@@ -2037,7 +2087,13 @@ function inicializarAplicacion() {
     
     // Cargar perfil de Firebase
     cargarPerfilDeFirebase(() => {
-        // Aplicar personalización (el horario ya se cargó con el perfil)
+        // Primero actualizar el título y footer con la información correcta del usuario
+        actualizarTituloUsuario();
+        
+        // Asegurar que la visibilidad del botón de administración esté correcta
+        actualizarVisibilidadAdmin();
+        
+        // Luego aplicar personalización
         aplicarPersonalizacion();
         
         // Pequeño delay para asegurar que los estilos se apliquen
@@ -2075,6 +2131,19 @@ function inicializarAplicacion() {
             
             // Habilitar tooltips de prerrequisitos después de 2 segundos
             habilitarTooltipsPrereq();
+            
+            // Asegurar que la visibilidad del botón de administración esté correcta después de toda la inicialización
+            actualizarVisibilidadAdmin();
+            
+            // Mostrar el contenido principal solo cuando todo esté listo
+            const mainContainer = document.getElementById('mainContainer');
+            if (mainContainer) {
+                mainContainer.style.visibility = 'visible';
+                // Añadir clase para la transición suave
+                setTimeout(() => {
+                    mainContainer.classList.add('loaded');
+                }, 10);
+            }
         }, 100);
     });
     
@@ -2394,13 +2463,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminError = document.getElementById('adminError');
     
     // Mostrar botón de administración para admin y cuentas con esAdmin
-    if (dropdownAdminBtn) {
-        if (USER_ID === 'admin' || (usuarios[USER_ID] && usuarios[USER_ID].esAdmin)) {
-            dropdownAdminBtn.style.display = 'flex';
-        } else {
-            dropdownAdminBtn.style.display = 'none';
-        }
-    }
+    actualizarVisibilidadAdmin();
     
     if (dropdownAdminBtn) dropdownAdminBtn.onclick = () => {
         if (adminPanel) {
@@ -2513,7 +2576,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (horarioBtn && horarioModal && closeHorarioBtn) {
         horarioBtn.addEventListener('click', () => {
             horarioModal.classList.add('active');
-            renderHorarioVisualSection();
+    renderHorarioVisualSection();
         });
         
         // Eventos múltiples para el botón de cerrar en móvil
@@ -2534,7 +2597,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             const horarioModal = document.getElementById('horarioVisualModal');
             if (horarioModal) {
-                horarioModal.classList.remove('active');
+            horarioModal.classList.remove('active');
                 console.log('Modal cerrado por evento de clic en móvil');
             }
         });
@@ -2660,31 +2723,24 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Verificar si el usuario existe y la contraseña es correcta
             if (usuarios[user] && usuarios[user].password === pass) {
-                // Verificar si se está intentando usar admin/admin cuando hay otros administradores
-                if (user === 'admin' && pass === 'admin') {
-                    // Contar cuántos administradores hay (excluyendo admin)
-                    const otrosAdmins = Object.keys(usuarios).filter(uid => 
-                        uid !== 'admin' && usuarios[uid] && usuarios[uid].esAdmin
-                    );
+                // BLOQUEAR COMPLETAMENTE EL ACCESO A LA CUENTA ADMIN
+                if (user === 'admin') {
+                    const loginError = document.getElementById('loginError');
+                    loginError.textContent = 'La cuenta de administrador está deshabilitada. Use una cuenta de usuario válida.';
+                    loginError.style.display = 'block';
                     
-                    if (otrosAdmins.length > 0) {
-                        const loginError = document.getElementById('loginError');
-                        loginError.textContent = 'La cuenta admin por defecto está deshabilitada. Use una cuenta de administrador válida.';
-                        loginError.style.display = 'block';
-                        
-                        // Agregar animación de shake al formulario
-                        const loginCard = document.querySelector('.login-card');
-                        loginCard.style.animation = 'none';
-                        setTimeout(() => {
-                            loginCard.style.animation = 'errorShake 0.5s ease-in-out';
-                        }, 10);
-                        
-                        // Limpiar animación después
-                        setTimeout(() => {
-                            loginCard.style.animation = '';
-                        }, 500);
-                        return;
-                    }
+                    // Agregar animación de shake al formulario
+                    const loginCard = document.querySelector('.login-card');
+                    loginCard.style.animation = 'none';
+                    setTimeout(() => {
+                        loginCard.style.animation = 'errorShake 0.5s ease-in-out';
+                    }, 10);
+                    
+                    // Limpiar animación después
+                    setTimeout(() => {
+                        loginCard.style.animation = '';
+                    }, 500);
+                    return;
                 }
                 
                 // Guardar el perfil del usuario anterior antes de cambiar (incluye horario)
@@ -2698,20 +2754,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Cargar el perfil completo del nuevo usuario (incluye horario)
                 cargarPerfilDeFirebase(() => {
-                    iniciarSesionCompartida();
+                    // VERIFICACIÓN ADICIONAL: Si es admin, cerrar sesión instantáneamente
+                    if (USER_ID === 'admin') {
+                        console.log('⚠️ Detección de sesión admin - cerrando instantáneamente...');
+                        showToast('Acceso denegado: Cuenta de administrador deshabilitada');
+                        setTimeout(() => {
+                            cerrarSesion();
+                        }, 1000); // Cerrar después de 1 segundo para mostrar el mensaje
+                        return;
+                    }
+                    
+                    // Ocultar login y mostrar la aplicación
+                    ocultarLogin();
                 });
                 loginError.style.display = 'none';
                 showToast(`¡Bienvenido, ${usuarios[user].nombre}!`);
                 
                 // Mostrar/ocultar botón de administración
-                const dropdownAdminBtn = document.getElementById('dropdownAdminBtn');
-                if (dropdownAdminBtn) {
-                    if (USER_ID === 'admin' || (usuarios[USER_ID] && usuarios[USER_ID].esAdmin)) {
-                        dropdownAdminBtn.style.display = 'flex';
-                    } else {
-                        dropdownAdminBtn.style.display = 'none';
-                    }
-                }
+                actualizarVisibilidadAdmin();
             } else {
                 const loginError = document.getElementById('loginError');
                 loginError.textContent = 'Usuario o contraseña incorrectos';
@@ -2732,7 +2792,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
     
-    // Escuchar cambios en la sesión compartida
+    // Escuchar cambios en la sesión compartida (solo para el primer login)
+    // Comentado para evitar que el cierre de sesión de un usuario afecte a otros
+    /*
     db.ref('sesionIniciada').on('value', function(snapshot) {
         if (snapshot.val() === true) {
             ocultarLogin();
@@ -2740,11 +2802,14 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarLogin();
         }
     });
+    */
 }); 
 
 
 function cerrarDropdownConAnimacion() {
     const opcionesDropdown = document.getElementById('opcionesDropdown');
+    const opcionesBtn = document.getElementById('opcionesBtn');
+    
     if (opcionesDropdown && opcionesDropdown.style.display !== 'none') {
         opcionesDropdown.classList.add('closing');
         setTimeout(() => {
@@ -2752,13 +2817,25 @@ function cerrarDropdownConAnimacion() {
             opcionesDropdown.classList.remove('closing');
         }, 200);
     }
+    
+    // Contraer el botón en desktop
+    if (opcionesBtn && window.innerWidth >= 1025) {
+        opcionesBtn.classList.remove('expanded');
+    }
 }
 
 function abrirDropdown() {
     const opcionesDropdown = document.getElementById('opcionesDropdown');
+    const opcionesBtn = document.getElementById('opcionesBtn');
+    
     if (opcionesDropdown) {
         opcionesDropdown.style.display = 'flex';
         opcionesDropdown.classList.remove('closing');
+    }
+    
+    // Expandir el botón en desktop
+    if (opcionesBtn && window.innerWidth >= 1025) {
+        opcionesBtn.classList.add('expanded');
     }
 }
 
@@ -2787,5 +2864,29 @@ window.addEventListener('load', function() {
         horarioModal.classList.remove('active');
     }
 }, false);
+
+// Listener para resize de ventana - contraer botón si se hace más pequeño
+window.addEventListener('resize', function() {
+    const opcionesBtn = document.getElementById('opcionesBtn');
+    const opcionesDropdown = document.getElementById('opcionesDropdown');
+    
+    if (opcionesBtn && window.innerWidth < 1025) {
+        opcionesBtn.classList.remove('expanded');
+    }
+    
+    // Si el dropdown está abierto y la ventana se hace pequeña, cerrarlo
+    if (opcionesDropdown && opcionesDropdown.style.display !== 'none' && window.innerWidth < 1025) {
+        cerrarDropdownConAnimacion();
+    }
+});
+
+// VERIFICACIÓN PERIÓDICA DE SEGURIDAD: Detectar y cerrar sesión admin
+setInterval(function() {
+    if (USER_ID === 'admin') {
+        console.log('⚠️ Detección periódica de sesión admin - cerrando instantáneamente...');
+        showToast('Acceso denegado: Cuenta de administrador deshabilitada');
+        cerrarSesion();
+    }
+}, 5000); // Verificar cada 5 segundos
 
 
