@@ -197,7 +197,7 @@ function mostrarCuentasCreadas() {
 
 // Función para cargar usuarios desde Firebase
 function cargarUsuariosDesdeFirebase() {
-    db.ref('usuarios').once('value').then(snap => {
+    return db.ref('usuarios').once('value').then(snap => {
         const data = snap.val();
         if (data) {
             // Agregar usuarios de Firebase a la lista local, excluyendo las cuentas no deseadas
@@ -245,6 +245,8 @@ function cargarUsuariosDesdeFirebase() {
                 iniciarSesionCompartida();
             }
         }
+        
+        return usuarios; // Devolver los usuarios cargados
     });
 }
 
@@ -360,7 +362,7 @@ function guardarOpciones() {
         createMalla();
         updateProgress();
         renderSelectorSemestreVisual();
-        renderHorarioVisualSection();
+        // NO llamar renderHorarioVisualSection() aquí para evitar que se abra automáticamente
         
         setTimeout(() => {
             document.querySelectorAll('.course').forEach(element => {
@@ -1821,7 +1823,15 @@ function cerrarHorario() {
     const horarioModal = document.getElementById('horarioVisualModal');
     if (horarioModal) {
         horarioModal.classList.remove('active');
-        console.log('Modal de horario cerrado');
+        console.log('Modal de horario cerrado exitosamente');
+        
+        // Forzar el cierre en móvil si es necesario
+        setTimeout(() => {
+            if (horarioModal.classList.contains('active')) {
+                horarioModal.classList.remove('active');
+                console.log('Cierre forzado del modal en móvil');
+            }
+        }, 100);
     } else {
         console.log('No se encontró el modal de horario');
     }
@@ -2019,6 +2029,12 @@ function borrarCuenta(usuarioId) {
 
 // Función de inicialización que carga datos de Firebase
 function inicializarAplicacion() {
+    // Asegurar que el modal del horario esté cerrado al inicializar
+    const horarioModal = document.getElementById('horarioVisualModal');
+    if (horarioModal) {
+        horarioModal.classList.remove('active');
+    }
+    
     // Cargar perfil de Firebase
     cargarPerfilDeFirebase(() => {
         // Aplicar personalización (el horario ya se cargó con el perfil)
@@ -2052,15 +2068,23 @@ function inicializarAplicacion() {
             
             try {
                 renderSelectorSemestreVisual();
-                renderHorarioVisualSection();
+                // NO llamar renderHorarioVisualSection() aquí para evitar que se abra automáticamente
             } catch (error) {
-                console.log('Error al renderizar horario:', error.message);
+                console.log('Error al renderizar selector de semestre:', error.message);
             }
             
             // Habilitar tooltips de prerrequisitos después de 2 segundos
             habilitarTooltipsPrereq();
         }, 100);
     });
+    
+    // Asegurar que el modal del horario esté cerrado después de toda la inicialización
+    setTimeout(() => {
+        const horarioModal = document.getElementById('horarioVisualModal');
+        if (horarioModal) {
+            horarioModal.classList.remove('active');
+        }
+    }, 200);
 }
 
 // Función para inicializar eventos básicos que no dependen de Firebase
@@ -2310,179 +2334,12 @@ function inicializarEventosBasicos() {
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOM cargado, iniciando configuración...');
-    
-    // Verificar si hay un usuario guardado en localStorage
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser && savedUser !== 'admin') {
-        console.log('🔄 Usuario encontrado en localStorage:', savedUser);
-        // No establecer USER_ID aquí, se hará después de verificar si hay otros administradores
-        // El login automático se hará después de cargar usuarios de Firebase
-    }
-    
-    // Mostrar login solo si no hay usuario guardado
-    if (!savedUser || savedUser === 'admin') {
-    const loginContainer = document.getElementById('loginContainer');
-    if (loginContainer) {
-        loginContainer.classList.add('show');
-        }
-    }
-    
-    // Cargar usuarios desde Firebase
-    cargarUsuariosDesdeFirebase();
-    
-    // Inicializar solo eventos básicos
-    inicializarEventosBasicos();
-    
-    // Configurar cuentas de demostración clickeables
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.demo-account')) {
-            const demoAccount = e.target.closest('.demo-account');
-            const accountText = demoAccount.querySelector('strong').textContent;
-            const loginUser = document.getElementById('loginUser');
-            const loginPass = document.getElementById('loginPass');
-            
-            if (accountText === 'admin') {
-                loginUser.value = 'admin';
-                loginPass.value = 'admin';
-            } else if (accountText === 'estudiante1') {
-                loginUser.value = 'estudiante1';
-                loginPass.value = '123456';
-            }
-            
-            // Agregar animación de feedback
-            demoAccount.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                demoAccount.style.transform = '';
-            }, 150);
-            
-            // Focus en el botón de login después de un momento
-            setTimeout(() => {
-                document.querySelector('.login-button').focus();
-            }, 200);
-        }
-    });
-    
-    // --- INICIO DE SESIÓN COMPARTIDA ---
-    const loginForm = document.getElementById('loginForm');
-    const loginError = document.getElementById('loginError');
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) logoutBtn.onclick = cerrarSesion;
-    if (loginForm) {
-        loginForm.onsubmit = function(e) {
-            e.preventDefault();
-            const user = document.getElementById('loginUser').value.trim();
-            const pass = document.getElementById('loginPass').value;
-            
-            // Verificar si el usuario existe y la contraseña es correcta
-            if (usuarios[user] && usuarios[user].password === pass) {
-                // Verificar si se está intentando usar admin/admin cuando hay otros administradores
-                if (user === 'admin' && pass === 'admin') {
-                    // Contar cuántos administradores hay (excluyendo admin)
-                    const otrosAdmins = Object.keys(usuarios).filter(uid => 
-                        uid !== 'admin' && usuarios[uid] && usuarios[uid].esAdmin
-                    );
-                    
-                    if (otrosAdmins.length > 0) {
-                        const loginError = document.getElementById('loginError');
-                        loginError.textContent = 'La cuenta admin por defecto está deshabilitada. Use una cuenta de administrador válida.';
-                        loginError.style.display = 'block';
-                        
-                        // Agregar animación de shake al formulario
-                        const loginCard = document.querySelector('.login-card');
-                        loginCard.style.animation = 'none';
-                        setTimeout(() => {
-                            loginCard.style.animation = 'errorShake 0.5s ease-in-out';
-                        }, 10);
-                        
-                        // Limpiar animación después
-                        setTimeout(() => {
-                            loginCard.style.animation = '';
-                        }, 500);
-                        return;
-                    }
-                }
-                
-                // Guardar el perfil del usuario anterior antes de cambiar (incluye horario)
-                const usuarioAnterior = USER_ID;
-                if (usuarioAnterior && usuarioAnterior !== user) {
-                    guardarPerfilEnFirebase();
-                }
-                
-                USER_ID = user; // Cambiar USER_ID al usuario logueado
-                localStorage.setItem('currentUser', user); // Guardar en localStorage
-                
-                // Cargar el perfil completo del nuevo usuario (incluye horario)
-                cargarPerfilDeFirebase(() => {
-                    iniciarSesionCompartida();
-                });
-                loginError.style.display = 'none';
-                showToast(`¡Bienvenido, ${usuarios[user].nombre}!`);
-                
-                // Mostrar/ocultar botón de administración
-                const dropdownAdminBtn = document.getElementById('dropdownAdminBtn');
-                if (dropdownAdminBtn) {
-                    if (USER_ID === 'admin' || (usuarios[USER_ID] && usuarios[USER_ID].esAdmin)) {
-                        dropdownAdminBtn.style.display = 'flex';
-                    } else {
-                        dropdownAdminBtn.style.display = 'none';
-                    }
-                }
-            } else {
-                const loginError = document.getElementById('loginError');
-                loginError.textContent = 'Usuario o contraseña incorrectos';
-                loginError.style.display = 'block';
-                
-                // Agregar animación de shake al formulario
-                const loginCard = document.querySelector('.login-card');
-                loginCard.style.animation = 'none';
-                setTimeout(() => {
-                    loginCard.style.animation = 'errorShake 0.5s ease-in-out';
-                }, 10);
-                
-                // Limpiar animación después
-                setTimeout(() => {
-                    loginCard.style.animation = '';
-                }, 500);
-            }
-        };
-    }
-    
-    // Escuchar cambios en la sesión compartida
-    db.ref('sesionIniciada').on('value', function(snapshot) {
-        if (snapshot.val() === true) {
-            ocultarLogin();
-        } else {
-            mostrarLogin();
-        }
-    });
-    
+    // Asegurar que el modal del horario inicie cerrado
     const horarioModal = document.getElementById('horarioVisualModal');
-    if (horarioModal) horarioModal.classList.remove('active');
-}); 
-
-
-function cerrarDropdownConAnimacion() {
-    const opcionesDropdown = document.getElementById('opcionesDropdown');
-    if (opcionesDropdown && opcionesDropdown.style.display !== 'none') {
-        opcionesDropdown.classList.add('closing');
-        setTimeout(() => {
-            opcionesDropdown.style.display = 'none';
-            opcionesDropdown.classList.remove('closing');
-        }, 200);
+    if (horarioModal) {
+        horarioModal.classList.remove('active');
     }
-}
-
-function abrirDropdown() {
-    const opcionesDropdown = document.getElementById('opcionesDropdown');
-    if (opcionesDropdown) {
-        opcionesDropdown.style.display = 'flex';
-        opcionesDropdown.classList.remove('closing');
-    }
-}
-
-
-document.addEventListener('DOMContentLoaded', () => {
+    
     // Menú desplegable de opciones
     const opcionesBtn = document.getElementById('opcionesBtn');
     const opcionesDropdown = document.getElementById('opcionesDropdown');
@@ -2652,17 +2509,45 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Botón de horario clásico
     const horarioBtn = document.getElementById('toggleHorarioBtn');
-    const horarioModal = document.getElementById('horarioVisualModal');
     const closeHorarioBtn = document.getElementById('closeHorarioModalBtn');
     if (horarioBtn && horarioModal && closeHorarioBtn) {
         horarioBtn.addEventListener('click', () => {
             horarioModal.classList.add('active');
-    renderHorarioVisualSection();
+            renderHorarioVisualSection();
         });
-        closeHorarioBtn.addEventListener('click', () => {
-            horarioModal.classList.remove('active');
+        
+        // Eventos múltiples para el botón de cerrar en móvil
+        closeHorarioBtn.addEventListener('click', cerrarHorario);
+        closeHorarioBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            cerrarHorario();
         });
+        
+        // Evento adicional para móvil que funcione en todas las orientaciones
+        closeHorarioBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        });
+        
+        // Evento específico para móvil portrait
+        closeHorarioBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const horarioModal = document.getElementById('horarioVisualModal');
+            if (horarioModal) {
+                horarioModal.classList.remove('active');
+                console.log('Modal cerrado por evento de clic en móvil');
+            }
+        });
+        
+        // Evento de clic fuera del modal para cerrar
         horarioModal.addEventListener('click', (e) => {
+            if (e.target === horarioModal) {
+                horarioModal.classList.remove('active');
+            }
+        });
+        
+        // Evento de toque fuera del modal para cerrar en móvil
+        horarioModal.addEventListener('touchend', (e) => {
             if (e.target === horarioModal) {
                 horarioModal.classList.remove('active');
             }
@@ -2678,6 +2563,229 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         cerrarDropdownConAnimacion();
     };
+    
+    // Verificar si hay un usuario guardado en localStorage
+    const savedUser = localStorage.getItem('currentUser');
+    console.log('🔄 Usuario guardado en localStorage:', savedUser);
+    
+    // Cargar usuarios desde Firebase primero
+    cargarUsuariosDesdeFirebase().then(() => {
+        // Verificar si hay sesión válida
+        if (savedUser && savedUser !== 'admin' && usuarios[savedUser]) {
+            // Hay sesión válida, establecer USER_ID y cargar aplicación
+            console.log('✅ Sesión válida encontrada, cargando aplicación...');
+            USER_ID = savedUser;
+            ocultarLogin();
+            inicializarAplicacion();
+        } else if (savedUser === 'admin' && usuarios['admin']) {
+            // Verificar si se puede usar admin (solo si no hay otros administradores)
+            const otrosAdmins = Object.keys(usuarios).filter(uid => 
+                uid !== 'admin' && usuarios[uid] && usuarios[uid].esAdmin
+            );
+            
+            if (otrosAdmins.length === 0) {
+                // No hay otros administradores, permitir usar admin
+                console.log('✅ Usando cuenta admin por defecto...');
+                USER_ID = 'admin';
+                ocultarLogin();
+                inicializarAplicacion();
+            } else {
+                // Hay otros administradores, no permitir admin por defecto
+                console.log('❌ Admin por defecto deshabilitado, hay otros administradores');
+                localStorage.removeItem('currentUser');
+                USER_ID = null;
+                mostrarLogin();
+            }
+        } else {
+            // No hay sesión válida, mostrar login
+            console.log('❌ No hay sesión válida, mostrando login...');
+            if (savedUser) {
+                localStorage.removeItem('currentUser');
+            }
+            USER_ID = null;
+            mostrarLogin();
+        }
+    }).catch((error) => {
+        // Error al cargar usuarios, mostrar login
+        console.error('❌ Error al cargar usuarios:', error);
+        if (savedUser) {
+            localStorage.removeItem('currentUser');
+        }
+        USER_ID = null;
+        mostrarLogin();
+    });
+    
+    // Inicializar solo eventos básicos
+    inicializarEventosBasicos();
+    
+    // Configurar cuentas de demostración clickeables
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.demo-account')) {
+            const demoAccount = e.target.closest('.demo-account');
+            const accountText = demoAccount.querySelector('strong').textContent;
+            const loginUser = document.getElementById('loginUser');
+            const loginPass = document.getElementById('loginPass');
+            
+            if (accountText === 'admin') {
+                loginUser.value = 'admin';
+                loginPass.value = 'admin';
+            } else if (accountText === 'estudiante1') {
+                loginUser.value = 'estudiante1';
+                loginPass.value = '123456';
+            }
+            
+            // Agregar animación de feedback
+            demoAccount.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                demoAccount.style.transform = '';
+            }, 150);
+            
+            // Focus en el botón de login después de un momento
+            setTimeout(() => {
+                document.querySelector('.login-button').focus();
+            }, 200);
+        }
+    });
+    
+    // --- INICIO DE SESIÓN COMPARTIDA ---
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.onclick = cerrarSesion;
+    if (loginForm) {
+        loginForm.onsubmit = function(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            
+            // Verificar si el usuario existe y la contraseña es correcta
+            if (usuarios[user] && usuarios[user].password === pass) {
+                // Verificar si se está intentando usar admin/admin cuando hay otros administradores
+                if (user === 'admin' && pass === 'admin') {
+                    // Contar cuántos administradores hay (excluyendo admin)
+                    const otrosAdmins = Object.keys(usuarios).filter(uid => 
+                        uid !== 'admin' && usuarios[uid] && usuarios[uid].esAdmin
+                    );
+                    
+                    if (otrosAdmins.length > 0) {
+                        const loginError = document.getElementById('loginError');
+                        loginError.textContent = 'La cuenta admin por defecto está deshabilitada. Use una cuenta de administrador válida.';
+                        loginError.style.display = 'block';
+                        
+                        // Agregar animación de shake al formulario
+                        const loginCard = document.querySelector('.login-card');
+                        loginCard.style.animation = 'none';
+                        setTimeout(() => {
+                            loginCard.style.animation = 'errorShake 0.5s ease-in-out';
+                        }, 10);
+                        
+                        // Limpiar animación después
+                        setTimeout(() => {
+                            loginCard.style.animation = '';
+                        }, 500);
+                        return;
+                    }
+                }
+                
+                // Guardar el perfil del usuario anterior antes de cambiar (incluye horario)
+                const usuarioAnterior = USER_ID;
+                if (usuarioAnterior && usuarioAnterior !== user) {
+                    guardarPerfilEnFirebase();
+                }
+                
+                USER_ID = user; // Cambiar USER_ID al usuario logueado
+                localStorage.setItem('currentUser', user); // Guardar en localStorage
+                
+                // Cargar el perfil completo del nuevo usuario (incluye horario)
+                cargarPerfilDeFirebase(() => {
+                    iniciarSesionCompartida();
+                });
+                loginError.style.display = 'none';
+                showToast(`¡Bienvenido, ${usuarios[user].nombre}!`);
+                
+                // Mostrar/ocultar botón de administración
+                const dropdownAdminBtn = document.getElementById('dropdownAdminBtn');
+                if (dropdownAdminBtn) {
+                    if (USER_ID === 'admin' || (usuarios[USER_ID] && usuarios[USER_ID].esAdmin)) {
+                        dropdownAdminBtn.style.display = 'flex';
+                    } else {
+                        dropdownAdminBtn.style.display = 'none';
+                    }
+                }
+            } else {
+                const loginError = document.getElementById('loginError');
+                loginError.textContent = 'Usuario o contraseña incorrectos';
+                loginError.style.display = 'block';
+                
+                // Agregar animación de shake al formulario
+                const loginCard = document.querySelector('.login-card');
+                loginCard.style.animation = 'none';
+                setTimeout(() => {
+                    loginCard.style.animation = 'errorShake 0.5s ease-in-out';
+                }, 10);
+                
+                // Limpiar animación después
+                setTimeout(() => {
+                    loginCard.style.animation = '';
+                }, 500);
+            }
+        };
+    }
+    
+    // Escuchar cambios en la sesión compartida
+    db.ref('sesionIniciada').on('value', function(snapshot) {
+        if (snapshot.val() === true) {
+            ocultarLogin();
+        } else {
+            mostrarLogin();
+        }
+    });
 }); 
+
+
+function cerrarDropdownConAnimacion() {
+    const opcionesDropdown = document.getElementById('opcionesDropdown');
+    if (opcionesDropdown && opcionesDropdown.style.display !== 'none') {
+        opcionesDropdown.classList.add('closing');
+        setTimeout(() => {
+            opcionesDropdown.style.display = 'none';
+            opcionesDropdown.classList.remove('closing');
+        }, 200);
+    }
+}
+
+function abrirDropdown() {
+    const opcionesDropdown = document.getElementById('opcionesDropdown');
+    if (opcionesDropdown) {
+        opcionesDropdown.style.display = 'flex';
+        opcionesDropdown.classList.remove('closing');
+    }
+}
+
+// Forzar que el modal del horario esté cerrado al cargar la página
+(function() {
+    const horarioModal = document.getElementById('horarioVisualModal');
+    if (horarioModal) {
+        horarioModal.classList.remove('active');
+    }
+})();
+
+// Evento que se ejecuta inmediatamente cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Forzar cierre del modal del horario
+    const horarioModal = document.getElementById('horarioVisualModal');
+    if (horarioModal) {
+        horarioModal.classList.remove('active');
+    }
+}, false);
+
+// Evento que se ejecuta cuando la página se carga completamente
+window.addEventListener('load', function() {
+    // Forzar cierre del modal del horario
+    const horarioModal = document.getElementById('horarioVisualModal');
+    if (horarioModal) {
+        horarioModal.classList.remove('active');
+    }
+}, false);
 
 
