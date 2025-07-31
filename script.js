@@ -280,8 +280,21 @@ function cargarUsuariosDesdeFirebase() {
 
 function guardarPerfilEnFirebase() {
     if (!USER_ID || USER_ID === 'admin') {
+        console.log('⚠️ No se puede guardar perfil: USER_ID inválido o es admin');
         return;
     }
+    
+    console.log('💾 Guardando perfil en Firebase para usuario:', USER_ID);
+    console.log('📊 Datos a guardar:', {
+        carreraActual,
+        colorActual: colorActual.nombre,
+        fuenteActual: fuenteActual.nombre,
+        completedCourses: Array.from(completedCourses),
+        courseGrades,
+        horario: horarioVisualData,
+        semestreSeleccionado: semestreVisualSeleccionado,
+        modoEdicion: modoEdicionHorario
+    });
     
     const datosAGuardar = {
         carreraActual,
@@ -294,9 +307,15 @@ function guardarPerfilEnFirebase() {
         modoEdicion: modoEdicionHorario
     };
     
-    db.ref('perfiles/' + USER_ID).set(datosAGuardar).catch((error) => {
-        console.error('Error al guardar perfil en Firebase:', error);
-    });
+    db.ref('perfiles/' + USER_ID).set(datosAGuardar)
+        .then(() => {
+            console.log('✅ Perfil guardado exitosamente en Firebase para usuario:', USER_ID);
+            // Verificar separación de datos después de guardar
+            verificarSeparacionDatos();
+        })
+        .catch((error) => {
+            console.error('❌ Error al guardar perfil en Firebase:', error);
+        });
 }
 function cargarPerfilDeFirebase(callback) {
     if (!USER_ID) {
@@ -304,33 +323,71 @@ function cargarPerfilDeFirebase(callback) {
         return;
     }
     
+    // LIMPIAR COMPLETAMENTE las variables globales antes de cargar nuevos datos
+    console.log('🧹 Limpiando variables globales antes de cargar perfil de:', USER_ID);
+    
+    // Limpiar datos de cursos
+    completedCourses = new Set();
+    courseGrades = {};
+    
+    // Limpiar datos de horario
+    horarioVisualData = [];
+    semestreVisualSeleccionado = 1;
+    modoEdicionHorario = false;
+    
+    // Resetear variables de personalización a valores por defecto
+    colorActual = configuracion.colores[0];
+    fuenteActual = configuracion.fuentes[0];
+    
     db.ref('perfiles/' + USER_ID).once('value').then(snap => {
         const data = snap.val();
         
         if (data) {
+            console.log('📥 Cargando datos del usuario:', USER_ID, data);
+            
             const carreraAnterior = carreraActual;
             carreraActual = data.carreraActual || carreraActual;
             colorActual = data.colorActual || colorActual;
             fuenteActual = data.fuenteActual || fuenteActual;
 
-            completedCourses = new Set(data.completedCourses || []);
-            courseGrades = data.courseGrades || {};
+            // Cargar datos de cursos con verificación
+            if (data.completedCourses && Array.isArray(data.completedCourses)) {
+                completedCourses = new Set(data.completedCourses);
+                console.log('✅ Cursos completados cargados:', completedCourses.size, 'cursos');
+            } else {
+                completedCourses = new Set();
+                console.log('ℹ️ No se encontraron cursos completados, usando Set vacío');
+            }
+            
+            if (data.courseGrades && typeof data.courseGrades === 'object') {
+                courseGrades = data.courseGrades;
+                console.log('✅ Notas de cursos cargadas:', Object.keys(courseGrades).length, 'notas');
+            } else {
+                courseGrades = {};
+                console.log('ℹ️ No se encontraron notas de cursos, usando objeto vacío');
+            }
             
             // Cargar horario desde el mismo perfil
-            if (data.horario) {
+            if (data.horario && Array.isArray(data.horario)) {
                 horarioVisualData = data.horario;
                 semestreVisualSeleccionado = data.semestreSeleccionado || 1;
                 modoEdicionHorario = data.modoEdicion || false;
+                console.log('✅ Horario cargado:', horarioVisualData.length, 'entradas');
             } else {
                 horarioVisualData = [];
                 semestreVisualSeleccionado = 1;
                 modoEdicionHorario = false;
+                console.log('ℹ️ No se encontró horario, usando array vacío');
             }
+            
+            console.log('✅ Perfil cargado exitosamente para usuario:', USER_ID);
+        } else {
+            console.log('ℹ️ No se encontraron datos para el usuario:', USER_ID, '- usando valores por defecto');
         }
         
         if (callback) callback();
     }).catch((error) => {
-        console.error('Error al cargar perfil desde Firebase:', error);
+        console.error('❌ Error al cargar perfil desde Firebase:', error);
         
         // Usar valores por defecto si falla la carga
         horarioVisualData = [];
@@ -2009,43 +2066,50 @@ function iniciarSesionCompartida() {
 }
 
 function cerrarSesion() {
+    console.log('🚪 Cerrando sesión para usuario:', USER_ID);
+    
     // Guardar el perfil del usuario actual antes de cerrar sesión
     const usuarioActual = USER_ID;
     if (usuarioActual && usuarioActual !== 'admin') {
+        console.log('💾 Guardando perfil antes de cerrar sesión...');
         guardarPerfilEnFirebase();
     }
     
-    // Limpiar localStorage
-    localStorage.removeItem('currentUser');
-    USER_ID = 'admin'; // Volver al usuario por defecto
+    // LIMPIAR COMPLETAMENTE todas las variables globales
+    console.log('🧹 Limpiando todas las variables globales...');
     
-    // Limpiar horario y preferencias para el usuario por defecto
+    // Limpiar datos de cursos
+    completedCourses = new Set();
+    courseGrades = {};
+    
+    // Limpiar datos de horario
     horarioVisualData = [];
     semestreVisualSeleccionado = 1;
     modoEdicionHorario = false;
     
-    // Guardar el estado limpio en Firebase para el usuario por defecto
-    const perfilAdmin = {
-        carreraActual: 'Ingeniería Civil',
-        colorActual: { nombre: 'Azul', primary: '#2196F3', secondary: '#1976D2' },
-        fuenteActual: { nombre: 'Roboto', family: 'Roboto, sans-serif' },
-        completedCourses: [],
-        courseGrades: {},
-        horario: [],
-        semestreSeleccionado: 1,
-        modoEdicion: false
-    };
-    db.ref('perfiles/' + USER_ID).set(perfilAdmin).catch((error) => {
-        console.error('Error al guardar estado limpio en Firebase:', error);
-    });
+    // Resetear variables de personalización
+    colorActual = configuracion.colores[0];
+    fuenteActual = configuracion.fuentes[0];
+    carreraActual = 'Medicina Veterinaria';
+    
+    // Limpiar localStorage
+    localStorage.removeItem('currentUser');
+    USER_ID = null; // No asignar 'admin' inmediatamente
     
     // Desactivar tooltips de prerrequisitos
     tooltipsPrereqHabilitados = false;
     
     // Remover clase para ocultar elementos hasta la próxima carga
     document.body.classList.remove('datos-cargados');
-    // No cambiar sesionIniciada para evitar afectar a otros usuarios
-    // db.ref('sesionIniciada').set(false);
+    
+    // Ocultar el contenedor principal
+    const mainContainer = document.getElementById('mainContainer');
+    if (mainContainer) {
+        mainContainer.style.visibility = 'hidden';
+        mainContainer.classList.remove('loaded');
+    }
+    
+    console.log('✅ Sesión cerrada y variables limpiadas');
     
     // Mostrar login
     mostrarLogin();
@@ -2745,12 +2809,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Guardar el perfil del usuario anterior antes de cambiar (incluye horario)
                 const usuarioAnterior = USER_ID;
-                if (usuarioAnterior && usuarioAnterior !== user) {
+                if (usuarioAnterior && usuarioAnterior !== user && usuarioAnterior !== 'admin') {
+                    console.log('💾 Guardando perfil del usuario anterior:', usuarioAnterior);
                     guardarPerfilEnFirebase();
                 }
                 
+                // LIMPIAR COMPLETAMENTE las variables globales antes de cambiar de usuario
+                console.log('🧹 Limpiando variables globales para cambio de usuario...');
+                completedCourses = new Set();
+                courseGrades = {};
+                horarioVisualData = [];
+                semestreVisualSeleccionado = 1;
+                modoEdicionHorario = false;
+                colorActual = configuracion.colores[0];
+                fuenteActual = configuracion.fuentes[0];
+                
                 USER_ID = user; // Cambiar USER_ID al usuario logueado
                 localStorage.setItem('currentUser', user); // Guardar en localStorage
+                
+                console.log('🔄 Cambiando a usuario:', user);
                 
                 // Cargar el perfil completo del nuevo usuario (incluye horario)
                 cargarPerfilDeFirebase(() => {
@@ -2763,6 +2840,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 1000); // Cerrar después de 1 segundo para mostrar el mensaje
                         return;
                     }
+                    
+                    // Verificar separación de datos después de cargar perfil
+                    verificarSeparacionDatos();
                     
                     // Ocultar login y mostrar la aplicación
                     ocultarLogin();
@@ -2888,5 +2968,18 @@ setInterval(function() {
         cerrarSesion();
     }
 }, 5000); // Verificar cada 5 segundos
+
+// Función de debugging para verificar separación de datos por usuario
+function verificarSeparacionDatos() {
+    console.log('🔍 === VERIFICACIÓN DE SEPARACIÓN DE DATOS ===');
+    console.log('👤 Usuario actual:', USER_ID);
+    console.log('📚 Cursos completados:', Array.from(completedCourses));
+    console.log('📊 Notas de cursos:', courseGrades);
+    console.log('📅 Horario visual:', horarioVisualData);
+    console.log('🎨 Color actual:', colorActual.nombre);
+    console.log('📝 Fuente actual:', fuenteActual.nombre);
+    console.log('🎓 Carrera actual:', carreraActual);
+    console.log('==========================================');
+}
 
 
