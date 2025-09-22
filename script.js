@@ -1,5 +1,5 @@
 // Variables globales - Inicializar con valores por defecto
-let carreraActual = 'Medicina Veterinaria';
+let carreraActual = null;
 let colorActual = configuracion.colores[0];
 let fuenteActual = configuracion.fuentes[0];
 let completedCourses = new Set();
@@ -221,13 +221,8 @@ function cargarUsuariosDesdeFirebase() {
     return db.ref('usuarios').once('value').then(snap => {
         const data = snap.val();
         if (data) {
-            // Agregar usuarios de Firebase a la lista local, excluyendo las cuentas no deseadas
+            // Agregar usuarios de Firebase a la lista local (sin excluir cuentas específicas)
             Object.keys(data).forEach(userId => {
-                // No cargar las cuentas que queremos eliminar
-                if (userId === 'estudiante1' || userId === 'estudiante2' || userId === 'profesor') {
-                    return; // Saltar estas cuentas
-                }
-                
                 if (!usuarios[userId]) {
                     usuarios[userId] = data[userId];
                 }
@@ -345,8 +340,13 @@ function cargarPerfilDeFirebase(callback) {
         if (data) {
             console.log('📥 Cargando datos del usuario:', USER_ID, data);
             
-            const carreraAnterior = carreraActual;
-            carreraActual = data.carreraActual || carreraActual;
+            const carreraUsuarioNormalizada = normalizarCarreraNombre(usuarios[USER_ID] && usuarios[USER_ID].carrera);
+            // Priorizar la carrera del usuario por encima de lo guardado si es válida
+            if (carreraUsuarioNormalizada && carreras[carreraUsuarioNormalizada]) {
+                carreraActual = carreraUsuarioNormalizada;
+            } else {
+                carreraActual = data.carreraActual || carreraActual;
+            }
             colorActual = data.colorActual || colorActual;
             fuenteActual = data.fuenteActual || fuenteActual;
 
@@ -468,7 +468,16 @@ function guardarOpciones() {
 
 // Función para obtener datos de la carrera actual
 function obtenerDatosCarrera() {
-    return carreras[carreraActual];
+    if (carreraActual && carreras[carreraActual]) {
+        return carreras[carreraActual];
+    }
+    const carreraUsuario = usuarios[USER_ID] && usuarios[USER_ID].carrera;
+    if (carreraUsuario && carreras[carreraUsuario]) {
+        return carreras[carreraUsuario];
+    }
+    // Respaldo final: primera carrera disponible
+    const primeraCarrera = Object.keys(carreras)[0];
+    return carreras[primeraCarrera];
 }
 
 // Función para convertir malla a formato semestres
@@ -2011,6 +2020,12 @@ function ocultarLogin() {
         return;
     }
     
+    // Fijar la carrera actual según el perfil del usuario antes de inicializar
+    const carreraUsuarioNormalizada = normalizarCarreraNombre(usuarios[USER_ID] && usuarios[USER_ID].carrera);
+    if (carreraUsuarioNormalizada && carreras[carreraUsuarioNormalizada]) {
+        carreraActual = carreraUsuarioNormalizada;
+    }
+    
     // Limpiar tooltips antes de mostrar aplicación
     limpiarTooltips();
     
@@ -2090,7 +2105,7 @@ function cerrarSesion() {
     // Resetear variables de personalización
     colorActual = configuracion.colores[0];
     fuenteActual = configuracion.fuentes[0];
-    carreraActual = 'Medicina Veterinaria';
+    carreraActual = null;
     
     // Limpiar localStorage
     localStorage.removeItem('currentUser');
@@ -2154,6 +2169,18 @@ function inicializarAplicacion() {
         // Primero actualizar el título y footer con la información correcta del usuario
         actualizarTituloUsuario();
         
+        // Asegurar que la carrera quede correctamente definida según el usuario
+        if (!carreraActual || !carreras[carreraActual]) {
+            const carreraUsuario = usuarios[USER_ID] && usuarios[USER_ID].carrera;
+            if (carreraUsuario && carreras[carreraUsuario]) {
+                carreraActual = carreraUsuario;
+            } else {
+                // Respaldo: primera carrera disponible en data.js
+                const primeraCarrera = Object.keys(carreras)[0];
+                carreraActual = primeraCarrera;
+            }
+        }
+        
         // Asegurar que la visibilidad del botón de administración esté correcta
         actualizarVisibilidadAdmin();
         
@@ -2213,9 +2240,9 @@ function inicializarAplicacion() {
     
     // Asegurar que el modal del horario esté cerrado después de toda la inicialización
     setTimeout(() => {
-        const horarioModal = document.getElementById('horarioVisualModal');
-        if (horarioModal) {
-            horarioModal.classList.remove('active');
+        const horarioModal2 = document.getElementById('horarioVisualModal');
+        if (horarioModal2) {
+            horarioModal2.classList.remove('active');
         }
     }, 200);
 }
@@ -2980,6 +3007,16 @@ function verificarSeparacionDatos() {
     console.log('📝 Fuente actual:', fuenteActual.nombre);
     console.log('🎓 Carrera actual:', carreraActual);
     console.log('==========================================');
+}
+
+// Normalizar nombre de carrera para mapearlo a una clave válida en `carreras`
+function normalizarCarreraNombre(nombreCarrera) {
+    if (!nombreCarrera || typeof nombreCarrera !== 'string') return null;
+    const objetivo = nombreCarrera.trim().toLowerCase();
+    for (const clave of Object.keys(carreras)) {
+        if (clave.trim().toLowerCase() === objetivo) return clave;
+    }
+    return null;
 }
 
 

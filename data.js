@@ -94,58 +94,75 @@ const carreras = {
         "duracion": "8 semestres + actividad de titulación",
         "malla": {
             "1er semestre": [
-                { "id": "ALG101", "nombre": "Álgebra I", "prerrequisitos": [] },
-                { "id": "ALM101", "nombre": "Algoritmos Multimediales", "prerrequisitos": [] },
-                { "id": "TEM101", "nombre": "Tecnología Multimedial", "prerrequisitos": [] },
+                { "id": "HAB101", "nombre": "Habilidades Académicas I", "prerrequisitos": [] },
                 { "id": "ING101", "nombre": "Inglés I", "prerrequisitos": [] },
-                { "id": "HAB101", "nombre": "Habilidades Académicas y Transversales", "prerrequisitos": [] }
+                { "id": "GEO101", "nombre": "Geometría Analítica", "prerrequisitos": [] },
+                { "id": "ALM101", "nombre": "Algoritmos Multimedia", "prerrequisitos": [] },
+                { "id": "TEM101", "nombre": "Tecnologías Multimedial", "prerrequisitos": [] },
+                { "id": "ALG101", "nombre": "Álgebra I", "prerrequisitos": [] },
             ],
             "2do semestre": [
-                { "id": "CAL201", "nombre": "Cálculo I", "prerrequisitos": [] },
-                { "id": "POO201", "nombre": "POO Multimedial", "prerrequisitos": ["ALM101"] },
-                { "id": "PRO201", "nombre": "Producción 2D", "prerrequisitos": [] },
+                { "id": "HAB201", "nombre": "Habilidades Académicas II", "prerrequisitos": ["HAB101"] },
                 { "id": "ING201", "nombre": "Inglés II", "prerrequisitos": ["ING101"] },
-                { "id": "ETI201", "nombre": "Ética y Ciudadanía", "prerrequisitos": [] }
+                { "id": "MAT201", "nombre": "Matemáticas Para Videojuegos", "prerrequisitos": ["GEO101"] },
+                { "id": "CAL201", "nombre": "Cálculo I", "prerrequisitos": ["ALG101"] },
+                { "id": "POO201", "nombre": "Programación Espacial", "prerrequisitos": ["ALM101"] },
+                { "id": "PRO201", "nombre": "Producción Multimedia", "prerrequisitos": ["TEM101"] },
             ],
             "3er semestre": [
-                { "id": "MET301", "nombre": "Metodologías para Videojuegos", "prerrequisitos": [] },
-                { "id": "PRO301", "nombre": "Programación Avanzada", "prerrequisitos": ["POO201"] },
-                { "id": "FUN301", "nombre": "Fundamentos de Videojuegos", "prerrequisitos": ["PRO201"] },
+                { "id": "ETI301", "nombre": "Ética y Ciudadanía", "prerrequisitos": [] },
                 { "id": "ING301", "nombre": "Inglés III", "prerrequisitos": ["ING201"] },
-                { "id": "ETI301", "nombre": "Ética y Ciudadanía II", "prerrequisitos": [] }
+                { "id": "MEC301", "nombre": "Mecánica para Simulación", "prerrequisitos": [] },
+                { "id": "POO301", "nombre": "POO Multimedia", "prerrequisitos": ["POO201"] },
+                { "id": "EST301", "nombre": "Estructura de Datos de Animación", "prerrequisitos": ["POO201"] },
+                { "id": "FUN301", "nombre": "Fundamentos de Videojuegos y Guionismo", "prerrequisitos": [] },
+
             ],
             "4to semestre": [
+
+                { "id": "RES401", "nombre": "Responsabilidad Social Universitaria", "prerrequisitos": ["ETI301"] },
+                { "id": "ING401", "nombre": "Inglés IV", "prerrequisitos": ["ING301"] },
                 { "id": "ECO401", "nombre": "Economía", "prerrequisitos": [] },
-                { "id": "EST401", "nombre": "Estructura de Datos", "prerrequisitos": ["PRO301"] },
-                { "id": "INT401", "nombre": "Interactividad en Juegos", "prerrequisitos": ["FUN301"] },
-                { "id": "LOG401", "nombre": "Lógica Digital y Videojuegos", "prerrequisitos": ["MET301"] },
-                { "id": "ING401", "nombre": "Inglés IV", "prerrequisitos": ["ING301"] }
+                { "id": "GRA401", "nombre": "Gráficas Computacionales", "prerrequisitos": ["POO301"] },
+                { "id": "FOT401", "nombre": "Fotografía Digital", "prerrequisitos": [] },
+                { "id": "MOD401", "nombre": "Modelos de Administración de Datos", "prerrequisitos": [] },
             ],
             "5to semestre": [
-                { "id": "PRE501", "nombre": "Preparación y Evaluación de Proyectos", "prerrequisitos": [] },
-                { "id": "DES501", "nombre": "Desarrollo Web", "prerrequisitos": [] },
-                { "id": "DIS501", "nombre": "Diseño de Videojuegos I", "prerrequisitos": ["LOG401"] },
-                { "id": "INT501", "nombre": "Interfaces y UX", "prerrequisitos": ["INT401"] }
+                { "id": "CON501", "nombre": "Contabilidad y Costos", "prerrequisitos": [] },
+                { "id": "GRA501", "nombre": "Gráficas Computacionales en Web", "prerrequisitos": [] },
+                { "id": "MOD501", "nombre": "Modelado Orgánico", "prerrequisitos": ["TEM101"] },
+                { "id": "SIS501", "nombre": "Sistemas Operativos y Redes", "prerrequisitos": [] },
+                { "id": "LOG501", "nombre": "Lógica Digital y Hapticos", "prerrequisitos": ["POO201"] },
+                { "id": "ESC501", "nombre": "Escenario de Videojuegos", "prerrequisitos": ["FUN301"] },
+                { "id": "ELE501", "nombre": "Electivo de Formación General I", "prerrequisitos": [] },
             ],
             "6to semestre": [
-                { "id": "GES601", "nombre": "Gestión de Proyectos", "prerrequisitos": [] },
-                { "id": "DIS601", "nombre": "Diseño de Videojuegos II", "prerrequisitos": ["DIS501"] },
-                { "id": "PRO601", "nombre": "Producción 3D", "prerrequisitos": [] },
-                { "id": "NAR601", "nombre": "Narrativa Tecnológica", "prerrequisitos": [] },
-                { "id": "VID601", "nombre": "Videojuegos Indie", "prerrequisitos": [] }
+                { "id": "INN601", "nombre": "Innovación, Emprendimiento y Sustentabilidad", "prerrequisitos": [] },
+                { "id": "INT601", "nombre": "Interfaces y Experiencias Usuarios en Web", "prerrequisitos": [] },
+                { "id": "PRP601", "nombre": "Producción 2D", "prerrequisitos": [] },
+                { "id": "ANI601", "nombre": "Animación", "prerrequisitos": [] },
+                { "id": "EFE601", "nombre": "Efectos Especiales", "prerrequisitos": [] },
+                { "id": "OPT601", "nombre": "Optimización de Videojuegos", "prerrequisitos": ["ESC501"] },
+                { "id": "ELE601", "nombre": "Electivo de Formación General II", "prerrequisitos": [] },
             ],
             "7mo semestre": [
-                { "id": "ADM701", "nombre": "Administración de Empresas", "prerrequisitos": [] },
-                { "id": "SIM701", "nombre": "Simulación y Visualización", "prerrequisitos": [] },
-                { "id": "DIS701", "nombre": "Diseño de Experiencias Inmersivas", "prerrequisitos": ["INT501"] },
-                { "id": "MAR701", "nombre": "Marketing Digital", "prerrequisitos": [] },
-                { "id": "ELE701", "nombre": "Electivo Específico I", "prerrequisitos": [] }
+                { "id": "PRE701", "nombre": "Preparación y Evaluacion de Proyectos", "prerrequisitos": ["CON501"] },
+                { "id": "DES701", "nombre": "Desarrollo Web", "prerrequisitos": ["INT601"] },
+                { "id": "ANI701", "nombre": "Animación Avanzada", "prerrequisitos": ["ANI601"] },
+                { "id": "VID701", "nombre": "Videojuegos Mobil", "prerrequisitos": [] },
+                { "id": "DIS701", "nombre": "Diseño de Videojuegos en Línea", "prerrequisitos": ["OPT601"] }
             ],
             "8vo semestre": [
-                { "id": "ADM801", "nombre": "Administración de Recursos Humanos", "prerrequisitos": [] },
-                { "id": "REA801", "nombre": "Realidad Virtual", "prerrequisitos": ["DIS701"] },
-                { "id": "ELE801", "nombre": "Electivo Específico II", "prerrequisitos": [] },
-                { "id": "TIT801", "nombre": "Actividad de Titulación", "prerrequisitos": [] }
+                { "id": "GES801", "nombre": "Gestión de Proyectos", "prerrequisitos": ["PRE701"] },
+                { "id": "ADM801", "nombre": "Administracion y Gestion del Talento Humano", "prerrequisitos": [] },
+                { "id": "PRO801", "nombre": "Procesamiento de Imágenes", "prerrequisitos": [] },
+                { "id": "MAR801", "nombre": "Marketing Digital", "prerrequisitos": [] },
+                { "id": "REA801", "nombre": "Realidad Virtual", "prerrequisitos": ["OPT601"] },
+            ],
+            "actividad de titulación": [
+                { "id": "ACT901", "nombre": "Actividad de Titulación", "prerrequisitos": ["PRE701"] },
+                { "id": "PRA901", "nombre": "Práctica Profesional", "prerrequisitos": [] },
+                { "id": "ELE901", "nombre": "Electivo de Profundización", "prerrequisitos": [] },
             ]
         }
     }
