@@ -914,8 +914,9 @@ function handleCourseClick(courseElement, courseData) {
                 const semesterData = mallaData.find(sem => 
                     sem.courses.some(course => course.id === prereq)
                 );
+                if (!semesterData) return prereq;
                 const course = semesterData.courses.find(course => course.id === prereq);
-                return course.name;
+                return course ? course.name : prereq;
             });
         showToast(`Debes aprobar primero: ${missingPrereqs.join(', ')}`);
         animatePrereqShake(courseElement);

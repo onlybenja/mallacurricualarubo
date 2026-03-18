@@ -165,7 +165,87 @@ const carreras = {
                 { "id": "ELE901", "nombre": "Electivo de Profundización", "prerrequisitos": [] },
             ]
         }
+    },
+    "Medicina Veterinaria malla nueva": {
+    "universidad": "Universidad Bernardo O'Higgins",
+    "duracion": "10 semestres",
+    "malla": {
+        "1er semestre": [
+            { "id": "BIO101", "nombre": "Biología Celular", "prerrequisitos": [] },
+            { "id": "MOR101", "nombre": "Morfología Micro y Macroscópica I", "prerrequisitos": [] },
+            { "id": "MAT101", "nombre": "Matemáticas", "prerrequisitos": [] },
+            { "id": "INT101", "nombre": "Introducción a la Medicina Veterinaria", "prerrequisitos": [] },
+            { "id": "ING101", "nombre": "Lengua Extranjera I", "prerrequisitos": [] },
+            { "id": "IUN101", "nombre": "Identidad Universitaria I", "prerrequisitos": [] }
+        ],
+        "2do semestre": [
+            { "id": "QUI201", "nombre": "Química y Bioquímica para la Vida", "prerrequisitos": ["BIO101"] },
+            { "id": "MOR201", "nombre": "Morfología Micro y Macroscópica II", "prerrequisitos": ["MOR101"] },
+            { "id": "BIO201", "nombre": "Bioestadística", "prerrequisitos": ["MAT101"] },
+            { "id": "ING201", "nombre": "Lengua Extranjera II", "prerrequisitos": ["ING101"] },
+            { "id": "IUN201", "nombre": "Identidad Universitaria II", "prerrequisitos": ["IUN101"] }
+        ],
+        "3er semestre": [
+            { "id": "AGE301", "nombre": "Agentes Biológicos de Enfermedad", "prerrequisitos": ["QUI201"] },
+            { "id": "FIS301", "nombre": "Fisiología y Fisiopatología Veterinaria I", "prerrequisitos": ["MOR201"] },
+            { "id": "GEN301", "nombre": "Genética Animal", "prerrequisitos": ["BIO201"] },
+            { "id": "ETI301", "nombre": "Etología y Bienestar Animal", "prerrequisitos": ["INT101"] },
+            { "id": "ECO301", "nombre": "Ecología", "prerrequisitos": [] },
+            { "id": "ING301", "nombre": "Lengua Extranjera III", "prerrequisitos": ["ING201"] }
+        ],
+        "4to semestre": [
+            { "id": "INM401", "nombre": "Inmunología General", "prerrequisitos": ["AGE301"] },
+            { "id": "FIS401", "nombre": "Fisiología y Fisiopatología Veterinaria II", "prerrequisitos": ["FIS301"] },
+            { "id": "ENF401", "nombre": "Enfermedades Infecciosas y Parasitarias", "prerrequisitos": ["AGE301"] },
+            { "id": "ING401", "nombre": "Lengua Extranjera IV", "prerrequisitos": ["ING301"] },
+            { "id": "PRA401", "nombre": "Práctica Integrada en Medicina Veterinaria I", "prerrequisitos": ["FIS301"] },
+            { "id": "RSU401", "nombre": "Responsabilidad Social Universitaria", "prerrequisitos": [] }
+        ],
+        "5to semestre": [
+            { "id": "PAT501", "nombre": "Patología Veterinaria", "prerrequisitos": ["FIS401"] },
+            { "id": "SEM501", "nombre": "Semiología", "prerrequisitos": ["FIS301"] },
+            { "id": "NUT501", "nombre": "Nutrición y Alimentación Animal", "prerrequisitos": ["FIS401"] },
+            { "id": "EPI501", "nombre": "Epidemiología", "prerrequisitos": ["ENF401"] },
+            { "id": "MAN501", "nombre": "Conservación y Manejo de Fauna Silvestre", "prerrequisitos": ["ECO301"] },
+            { "id": "PRA501", "nombre": "Práctica Integrada en Medicina Veterinaria II", "prerrequisitos": ["FIS401","PRA401"] }
+        ],
+        "6to semestre": [
+            { "id": "FAR601", "nombre": "Farmacología Veterinaria", "prerrequisitos": ["SEM501"] },
+            { "id": "REP601", "nombre": "Reproducción y Obstetricia Animal", "prerrequisitos": ["SEM501"] },
+            { "id": "PRO601", "nombre": "Producción Animal Sostenible", "prerrequisitos": ["NUT501"] },
+            { "id": "SAL601", "nombre": "Salud Pública Veterinaria", "prerrequisitos": ["EPI501"] },
+            { "id": "LEG601", "nombre": "Legislación y Evaluación de Impacto Ambiental", "prerrequisitos": ["MAN501"] },
+            { "id": "PRA601", "nombre": "Práctica Integrada en Medicina Veterinaria III", "prerrequisitos": ["PRA501"] }
+        ],
+        "7mo semestre": [
+            { "id": "HEM701", "nombre": "Hematología y Bioquímica Clínica", "prerrequisitos": ["SEM501"] },
+            { "id": "IMA701", "nombre": "Imagenología Diagnóstica", "prerrequisitos": ["SEM501"] },
+            { "id": "PRO701", "nombre": "Producción de Rumiantes", "prerrequisitos": ["PRO601"] },
+            { "id": "INS701", "nombre": "Inspección y Control de Calidad Veterinaria de los Alimentos", "prerrequisitos": ["SAL601"] },
+            { "id": "AVI701", "nombre": "Producción y Patología Aviar", "prerrequisitos": ["PRO601"] },
+            { "id": "PRA701", "nombre": "Práctica Integrada en Medicina Veterinaria IV", "prerrequisitos": ["PRA601","PRO601"] }
+        ],
+        "8vo semestre": [
+            { "id": "CIR801", "nombre": "Cirugía Veterinaria", "prerrequisitos": ["HEM701","FAR601"] },
+            { "id": "MED801", "nombre": "Medicina Interna de Animales de Compañía", "prerrequisitos": ["FAR601","HEM701","IMA701"] },
+            { "id": "MED802", "nombre": "Medicina Interna de Animales Mayores", "prerrequisitos": ["IMA701","PRO701"] },
+            { "id": "ACU801", "nombre": "Acuicultura y Patología de Peces", "prerrequisitos": ["PRO601"] },
+            { "id": "INV801", "nombre": "Investigación y Gestión de Proyectos", "prerrequisitos": [] },
+            { "id": "PRA801", "nombre": "Práctica Integrada en Medicina Veterinaria V", "prerrequisitos": ["PRA701"] }
+        ],
+        "9no semestre": [
+            { "id": "INT901", "nombre": "Internado Clínico", "prerrequisitos": ["MED801","CIR801","PRA801"] },
+            { "id": "INT902", "nombre": "Internado de Salud Pública", "prerrequisitos": ["INS701","PRA801"] },
+            { "id": "TIT901", "nombre": "Trabajo de Titulación I", "prerrequisitos": ["INV801"] },
+            { "id": "ADM901", "nombre": "Gestión y Administración", "prerrequisitos": ["PRO701"] }
+        ],
+        "10mo semestre": [
+            { "id": "INT1001", "nombre": "Internado de Conservación y Biodiversidad", "prerrequisitos": ["INV801","PRA801"] },
+            { "id": "INT1002", "nombre": "Internado de Producción Animal", "prerrequisitos": ["ADM901","MED802","AVI701","ACU801","PRA801"] },
+            { "id": "TIT1001", "nombre": "Trabajo de Titulación", "prerrequisitos": ["TIT901"] }
+        ]
     }
+}
 };
 
 // Configuración de personalización
